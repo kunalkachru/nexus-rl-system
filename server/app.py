@@ -20,6 +20,7 @@ Endpoints:
 """
 
 import time
+import json
 import pathlib
 from typing import Dict, Any, Optional
 from fastapi import FastAPI, HTTPException
@@ -30,6 +31,9 @@ from pydantic import BaseModel
 from server.environment import NexusEnvironment
 from server.incidents import INCIDENT_LIBRARY
 from server.reward import compute_total_reward
+
+# Persistent storage for training data
+REWARDS_FILE = pathlib.Path("episode_rewards.json")
 
 app = FastAPI(
     title="NEXUS Enhanced",
@@ -46,7 +50,31 @@ app.add_middleware(
 
 # Session store — server-side external state (Theme 2)
 _sessions: Dict[str, NexusEnvironment] = {}
-_episode_rewards: list = []  # For /metrics
+_episode_rewards: list = []  # For /metrics (only reward > 0)
+_all_episodes: list = []  # ALL episodes (for progress tracking)
+_total_steps: int = 0  # Track EVERY step call (real-time progress)
+
+# Load persistent data
+def load_episode_rewards():
+    global _episode_rewards, _all_episodes
+    if REWARDS_FILE.exists():
+        try:
+            with open(REWARDS_FILE, 'r') as f:
+                data = json.load(f)
+                if isinstance(data, list):
+                    _episode_rewards = data
+        except:
+            _episode_rewards = []
+
+def save_episode_rewards():
+    try:
+        with open(REWARDS_FILE, 'w') as f:
+            json.dump(_episode_rewards, f)
+    except:
+        pass
+
+# Load on startup
+load_episode_rewards()
 
 
 # ------------------------------------------------------------------
@@ -105,12 +133,27 @@ def reset(request: ResetRequest):
 @app.post("/step/{session_id}")
 def step(session_id: str, request: StepRequest):
     """Execute one IC action. Returns observation, reward, done, info."""
+    global _total_steps
+
     env = _get_env(session_id)
     action = request.model_dump()
     obs, reward, done, info = env.step(action)
 
-    if done and reward > 0:
-        _episode_rewards.append(reward)
+    # Log EVERY step call (real-time progress)
+    _total_steps += 1
+
+    if done:
+        # Track ALL episodes (even zero-reward) for progress
+        _all_episodes.append({
+            "session_id": session_id,
+            "reward": reward,
+            "timestamp": time.time()
+        })
+
+        # Save successful episodes (reward > 0) for learning curve
+        if reward > 0:
+            _episode_rewards.append(reward)
+            save_episode_rewards()
 
     return {
         "observation": obs,
@@ -260,16 +303,21 @@ def get_tool_status(session_id: str):
 @app.get("/metrics")
 def get_metrics():
     """Training metrics summary — reward curves for demo and web UI."""
-    if not _episode_rewards:
-        return {"episode_count": 0, "rewards": [], "avg_reward": None}
     return {
-        "episode_count": len(_episode_rewards),
+        "episode_count": len(_episode_rewards),  # Episodes with reward > 0
+        "total_episodes": len(_all_episodes),    # ALL episodes (including 0-reward)
         "rewards": _episode_rewards[-50:],
-        "avg_reward": round(sum(_episode_rewards) / len(_episode_rewards), 4),
-        "best_reward": round(max(_episode_rewards), 4),
+        "avg_reward": round(sum(_episode_rewards) / len(_episode_rewards), 4) if _episode_rewards else None,
+        "best_reward": round(max(_episode_rewards), 4) if _episode_rewards else None,
         "recent_avg": round(
             sum(_episode_rewards[-5:]) / min(5, len(_episode_rewards)), 4
-        ),
+        ) if _episode_rewards else None,
+        "training_progress": {
+            "total_steps": _total_steps,         # EVERY API call logged in real-time
+            "total_runs": len(_all_episodes),
+            "successful_episodes": len(_episode_rewards),
+            "success_rate": round(len(_episode_rewards) / len(_all_episodes) * 100, 1) if _all_episodes else 0,
+        }
     }
 
 

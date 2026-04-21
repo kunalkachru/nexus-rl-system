@@ -520,7 +520,7 @@
     </div>
 
     <script>
-        let rewardChart = null;
+        let _rewardChart = null;
         let validationSessionId = null;
 
         function switchTab(tabName) {
@@ -672,11 +672,13 @@
         }
 
         async function fetchLearningCurve() {
+            console.log('[fetchLearningCurve] Starting...');
             try {
                 const response = await fetch('/learning-curve');
                 const data = await response.json();
 
                 const rewards = data.rewards || [];
+                console.log(`[fetchLearningCurve] Fetched ${rewards.length} rewards, baseline: ${data.baseline}`);
                 const labels = rewards.map((r, i) => `Ep ${i + 1}`);
 
                 // Calculate rolling average (5-episode window)
@@ -687,13 +689,14 @@
                     rolling.push(chunk.reduce((a, b) => a + b, 0) / chunk.length);
                 }
 
-                const ctx = document.getElementById('rewardChart').getContext('2d');
+                const canvas = document.getElementById('rewardChart');
 
-                if (rewardChart) {
-                    rewardChart.destroy();
-                }
+                // Reset canvas to remove any attached chart instance
+                canvas.width = canvas.offsetWidth;
+                canvas.height = canvas.offsetHeight;
+                const ctx = canvas.getContext('2d');
 
-                rewardChart = new Chart(ctx, {
+                _rewardChart = new Chart(ctx, {
                     type: 'line',
                     data: {
                         labels: labels,
@@ -720,7 +723,7 @@
                             },
                             {
                                 label: 'Baseline (Untrained)',
-                                data: Array(rewards.length).fill(rewards.length > 0 ? rewards[0] : 0.28),
+                                data: Array(rewards.length).fill(data.baseline || 0.265),
                                 borderColor: '#ef4444',
                                 borderDash: [5, 5],
                                 borderWidth: 2,
@@ -761,6 +764,7 @@
                         }
                     }
                 });
+                console.log('[fetchLearningCurve] Chart rendered successfully');
             } catch (e) {
                 console.error('Error fetching learning curve:', e);
             }
