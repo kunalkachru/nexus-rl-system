@@ -1,0 +1,9 @@
+.env
+*.pyc
+__pycache__/
+.pytest_cache/
+uv.lock
+venv/
+.venv/
+training_artifacts/pre_event_reward_curves.json
+*.png

@@ -1,0 +1,108 @@
+{
+  "description": "Untrained scripted baseline on INC003 \u2014 establishes reward floor for GRPO improvement (BRD Criterion 3)",
+  "incident_id": "INC003",
+  "policy": "scripted_baseline",
+  "n_trials": 5,
+  "avg_reward": 0.344,
+  "min_reward": 0.344,
+  "max_reward": 0.344,
+  "target_trained_reward": "0.55-0.75 (after 200 GRPO steps)",
+  "improvement_headroom": 0.306,
+  "trials": [
+    {
+      "trial": 1,
+      "incident_id": "INC003",
+      "policy": "scripted_baseline",
+      "steps": 25,
+      "elapsed_minutes": 50.0,
+      "reward": 0.344,
+      "breakdown": {
+        "mttr": 0.5319,
+        "diagnosis": 0.0,
+        "customer": 0.3667,
+        "coordination": 0.45,
+        "oversight": 0.0,
+        "depth_bonus": 0.0
+      },
+      "coalition_correct": null,
+      "notifications_sent": 0,
+      "hypotheses_stated": []
+    },
+    {
+      "trial": 2,
+      "incident_id": "INC003",
+      "policy": "scripted_baseline",
+      "steps": 25,
+      "elapsed_minutes": 50.0,
+      "reward": 0.344,
+      "breakdown": {
+        "mttr": 0.5319,
+        "diagnosis": 0.0,
+        "customer": 0.3667,
+        "coordination": 0.45,
+        "oversight": 0.0,
+        "depth_bonus": 0.0
+      },
+      "coalition_correct": null,
+      "notifications_sent": 0,
+      "hypotheses_stated": []
+    },
+    {
+      "trial": 3,
+      "incident_id": "INC003",
+      "policy": "scripted_baseline",
+      "steps": 25,
+      "elapsed_minutes": 50.0,
+      "reward": 0.344,
+      "breakdown": {
+        "mttr": 0.5319,
+        "diagnosis": 0.0,
+        "customer": 0.3667,
+        "coordination": 0.45,
+        "oversight": 0.0,
+        "depth_bonus": 0.0
+      },
+      "coalition_correct": null,
+      "notifications_sent": 0,
+      "hypotheses_stated": []
+    },
+    {
+      "trial": 4,
+      "incident_id": "INC003",
+      "policy": "scripted_baseline",
+      "steps": 25,
+      "elapsed_minutes": 50.0,
+      "reward": 0.344,
+      "breakdown": {
+        "mttr": 0.5319,
+        "diagnosis": 0.0,
+        "customer": 0.3667,
+        "coordination": 0.45,
+        "oversight": 0.0,
+        "depth_bonus": 0.0
+      },
+      "coalition_correct": null,
+      "notifications_sent": 0,
+      "hypotheses_stated": []
+    },
+    {
+      "trial": 5,
+      "incident_id": "INC003",
+      "policy": "scripted_baseline",
+      "steps": 25,
+      "elapsed_minutes": 50.0,
+      "reward": 0.344,
+      "breakdown": {
+        "mttr": 0.5319,
+        "diagnosis": 0.0,
+        "customer": 0.3667,
+        "coordination": 0.45,
+        "oversight": 0.0,
+        "depth_bonus": 0.0
+      },
+      "coalition_correct": null,
+      "notifications_sent": 0,
+      "hypotheses_stated": []
+    }
+  ]
+}

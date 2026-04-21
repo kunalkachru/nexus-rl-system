@@ -1,0 +1,619 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NEXUS Enhanced - Incident Commander</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            color: #e2e8f0;
+            line-height: 1.6;
+        }
+        .container { max-width: 1400px; margin: 0 auto; padding: 20px; }
+        header { text-align: center; margin-bottom: 40px; border-bottom: 2px solid #334155; padding-bottom: 20px; }
+        h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            background: linear-gradient(135deg, #60a5fa 0%, #a78bfa 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .subtitle { color: #94a3b8; font-size: 1.1em; }
+        .grid { display: grid; grid-template-columns: 1fr 2fr; gap: 20px; margin-bottom: 30px; align-items: start; }
+        .card {
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+        }
+        #episode-display {
+            display: flex;
+            flex-direction: column;
+        }
+        #episode-display > div:not(.episode-buttons):not(#reward-section) {
+            flex: 0 0 auto;
+        }
+        .episode-buttons {
+            position: sticky;
+            bottom: 0;
+            background: #1e293b;
+            padding: 12px 0 0 0;
+            border-top: 1px solid #334155;
+            z-index: 10;
+        }
+        .card h2 {
+            font-size: 1.3em;
+            margin-bottom: 15px;
+            color: #60a5fa;
+            border-bottom: 1px solid #334155;
+            padding-bottom: 10px;
+        }
+        .card h3 { font-size: 1.1em; margin-top: 15px; margin-bottom: 10px; color: #cbd5e1; }
+        .control-group { margin-bottom: 15px; }
+        label { display: block; font-size: 0.9em; margin-bottom: 5px; color: #cbd5e1; }
+        select, input { width: 100%; padding: 8px 12px; background: #0f172a; border: 1px solid #334155; border-radius: 4px; color: #e2e8f0; font-size: 0.95em; }
+        select:focus, input:focus { outline: none; border-color: #60a5fa; box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.1); }
+        button {
+            padding: 10px 16px;
+            background: linear-gradient(135deg, #60a5fa 0%, #3b82f6 100%);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 0.95em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        button:hover { transform: translateY(-2px); box-shadow: 0 8px 12px rgba(59, 130, 246, 0.3); }
+        .btn-primary { width: 100%; margin-top: 10px; }
+        .btn-secondary { background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%); margin-right: 10px; }
+        .incident-item {
+            background: #0f172a;
+            padding: 12px;
+            margin-bottom: 10px;
+            border-left: 3px solid #60a5fa;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .incident-item:hover { background: #1e293b; border-left-color: #a78bfa; }
+        .incident-title { font-weight: 600; margin-bottom: 4px; }
+        .incident-meta { font-size: 0.85em; color: #94a3b8; }
+        .status-badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 3px;
+            font-size: 0.8em;
+            font-weight: 600;
+            margin-right: 8px;
+        }
+        .status-easy { background: #10b981; color: white; }
+        .status-medium { background: #f59e0b; color: white; }
+        .status-hard { background: #ef4444; color: white; }
+        .status-very_hard { background: #dc2626; color: white; }
+        .status-nightmare { background: #7c2d12; color: #fed7aa; }
+        .severity-p1 { color: #ef4444; font-weight: 600; }
+        .severity-p2 { color: #f59e0b; font-weight: 600; }
+        .observation-box {
+            background: #0f172a;
+            border: 1px solid #334155;
+            border-radius: 4px;
+            padding: 15px;
+            margin-bottom: 15px;
+            max-height: 400px;
+            overflow-y: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+        }
+        .observation-box h4 { color: #60a5fa; margin-bottom: 10px; }
+        .reward-breakdown { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-top: 15px; }
+        .reward-item { background: #0f172a; padding: 10px; border-radius: 4px; border-left: 3px solid #60a5fa; }
+        .reward-label { font-size: 0.85em; color: #94a3b8; margin-bottom: 4px; }
+        .reward-value { font-size: 1.3em; font-weight: 600; color: #4ade80; }
+        .phase-indicator { display: inline-block; padding: 4px 8px; background: #334155; border-radius: 3px; font-size: 0.85em; }
+        .error-msg { background: #7f1d1d; color: #fca5a5; padding: 12px; border-radius: 4px; margin-bottom: 15px; border-left: 3px solid #dc2626; }
+        .success-msg { background: #064e3b; color: #86efac; padding: 12px; border-radius: 4px; margin-bottom: 15px; border-left: 3px solid #10b981; }
+        .spinner { border: 3px solid #334155; border-top: 3px solid #60a5fa; border-radius: 50%; width: 20px; height: 20px; animation: spin 1s linear infinite; display: inline-block; margin-right: 8px; vertical-align: middle; }
+        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        textarea { width: 100%; padding: 10px; background: #0f172a; border: 1px solid #334155; border-radius: 4px; color: #e2e8f0; font-family: monospace; font-size: 0.9em; min-height: 80px; }
+        textarea:focus { outline: none; border-color: #60a5fa; box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.1); }
+        .finding-item {
+            background: #0f172a;
+            padding: 12px;
+            margin-bottom: 8px;
+            border-left: 4px solid #60a5fa;
+            border-radius: 4px;
+            font-size: 0.9em;
+            line-height: 1.4;
+        }
+        .finding-agent {
+            display: inline-block;
+            font-weight: 600;
+            margin-bottom: 6px;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 0.8em;
+        }
+        .agent-ic { background: #3b82f6; color: white; border-left-color: #3b82f6; }
+        .agent-l1 { background: #10b981; color: white; border-left-color: #10b981; }
+        .agent-l2 { background: #8b5cf6; color: white; border-left-color: #8b5cf6; }
+        .agent-sre { background: #f59e0b; color: white; border-left-color: #f59e0b; }
+        .agent-pm { background: #ec4899; color: white; border-left-color: #ec4899; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🚨 NEXUS Enhanced</h1>
+            <p class="subtitle">Multi-Agent Enterprise Incident Response RL Environment</p>
+        </header>
+
+        <div id="messages"></div>
+
+        <div class="grid">
+            <div class="card">
+                <h2>Incident Selection</h2>
+                <div id="incidents-list"></div>
+                <div id="selected-incident-details" style="display: none; margin-top: 15px; padding: 12px; background: #0f172a; border-left: 3px solid #a78bfa; border-radius: 4px;">
+                    <h4 style="margin-bottom: 8px; color: #a78bfa;">📋 Details</h4>
+                    <div id="details-content" style="font-size: 0.85em; line-height: 1.4;"></div>
+                </div>
+                <h3 style="margin-top: 15px;">Difficulty</h3>
+                <div class="control-group">
+                    <label>Select Difficulty:</label>
+                    <select id="difficulty">
+                        <option value="">Auto</option>
+                        <option value="easy">Easy</option>
+                        <option value="medium">Medium</option>
+                        <option value="hard">Hard</option>
+                        <option value="very_hard">Very Hard</option>
+                        <option value="nightmare">Nightmare</option>
+                    </select>
+                </div>
+                <button class="btn-primary" onclick="startEpisode()">Start New Episode</button>
+                <hr style="border: none; border-top: 1px solid #334155; margin: 20px 0;">
+                <h3>Session</h3>
+                <div id="session-info" style="font-size: 0.9em; color: #94a3b8;">No active session</div>
+            </div>
+
+            <div class="card">
+                <h2>Episode State</h2>
+                <div id="episode-display" style="display: none;">
+                    <div style="margin-bottom: 15px;">
+                        <strong>Phase:</strong> <span id="current-phase" class="phase-indicator">detection</span><br>
+                        <strong>Step:</strong> <span id="current-step">0</span> / <span id="max-steps">50</span><br>
+                        <strong>Elapsed:</strong> <span id="elapsed-minutes">0</span> min
+                    </div>
+                    <div style="background: #0f172a; padding: 12px; border-radius: 4px; margin-bottom: 12px; border-left: 3px solid #60a5fa;">
+                        <h4 style="margin-bottom: 8px;">📝 Situation Assessment</h4>
+                        <p style="font-size: 0.8em; color: #94a3b8; margin-bottom: 8px;">Describe your current understanding of the incident. Include observations from agent findings.</p>
+                        <textarea id="assessment" placeholder="E.g., 'L2 reports heap at 14GB. Service restarts every 90s. Likely memory leak in recent deployment.'"></textarea>
+                    </div>
+                    <div style="background: #0f172a; padding: 12px; border-radius: 4px; margin-bottom: 12px; border-left: 3px solid #8b5cf6;">
+                        <h4 style="margin-bottom: 8px;">🔍 Root Cause Hypothesis</h4>
+                        <p style="font-size: 0.8em; color: #94a3b8; margin-bottom: 8px;">State your best hypothesis for the root cause. Reword competing hypotheses if applicable.</p>
+                        <textarea id="hypothesis" placeholder="E.g., 'Memory leak in recommendation-service ML model cache'"></textarea>
+                    </div>
+                    <div style="background: #0f172a; padding: 12px; border-radius: 4px; margin-bottom: 12px; border-left: 3px solid #10b981;">
+                        <label style="display: block; margin-bottom: 8px;">✅ Resolution Confidence</label>
+                        <p style="font-size: 0.8em; color: #94a3b8; margin-bottom: 8px;">How confident are you in resolution? (0.0 = unsure, 1.0 = certain. Episode ends when > 0.80)</p>
+                        <input type="number" id="confidence" min="0" max="1" step="0.05" value="0.0" style="max-width: 100px;">
+                    </div>
+                    <div style="background: #0f172a; padding: 12px; border-radius: 4px; margin-bottom: 12px; border-left: 3px solid #f97316;">
+                        <h4 style="margin-bottom: 8px;">👥 Dispatch Specialists</h4>
+                        <p style="font-size: 0.8em; color: #94a3b8; margin-bottom: 10px;">Send directives to agents to gather intelligence and take action.</p>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px;">
+                            <label style="display: flex; align-items: center; gap: 6px; cursor: pointer;"><input type="checkbox" id="dispatch-l2" /> <span style="color: #60a5fa;">L2 Engineer</span></label>
+                            <label style="display: flex; align-items: center; gap: 6px; cursor: pointer;"><input type="checkbox" id="dispatch-l1" /> <span style="color: #34d399;">L1 Support</span></label>
+                            <label style="display: flex; align-items: center; gap: 6px; cursor: pointer;"><input type="checkbox" id="dispatch-sre" /> <span style="color: #fbbf24;">SRE Agent</span></label>
+                            <label style="display: flex; align-items: center; gap: 6px; cursor: pointer;"><input type="checkbox" id="dispatch-pm" /> <span style="color: #c084fc;">Product Manager</span></label>
+                        </div>
+                        <div id="sre-runbook-options" style="display: none; margin-top: 10px; padding: 10px; background: #1e293b; border-radius: 4px; border-left: 2px solid #fbbf24;">
+                            <label style="display: block; margin-bottom: 5px; font-size: 0.85em; color: #fbbf24;">📋 Select Runbook Step:</label>
+                            <select id="sre-runbook-step" style="width: 100%; padding: 8px; border-radius: 4px; background: #0f172a; border: 1px solid #334155; color: #e2e8f0;">
+                                <option value="">-- Select Step --</option>
+                                <option value="rb_heap_profile">📊 Profile Heap Memory</option>
+                                <option value="rb_check_cache_config">⚙️ Check Cache Configuration</option>
+                                <option value="rb_set_cache_eviction">🔧 Apply LRU Eviction</option>
+                                <option value="rb_controlled_restart">♻️ Rolling Restart</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="episode-buttons">
+                        <div style="display: flex; gap: 10px; margin-bottom: 12px;">
+                            <button id="btn-autofill" class="btn-secondary" onclick="autoFillTestData()" style="flex: 1; background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);">🧪 Auto-Fill Test Data</button>
+                        </div>
+                        <div style="display: flex; gap: 10px;">
+                            <button id="btn-execute" class="btn-secondary" onclick="stepEpisode()" style="flex: 1;">▶ Execute Step</button>
+                            <button id="btn-end" class="btn-secondary" onclick="endEpisode()" style="flex: 1; background: linear-gradient(135deg, #10b981 0%, #059669 100%);">🏁 End Episode</button>
+                        </div>
+                    </div>
+                    <div id="reward-section" style="display: none; margin-top: 20px;">
+                        <h3>Final Reward</h3>
+                        <div class="reward-breakdown" id="reward-breakdown"></div>
+                    </div>
+                </div>
+                <div id="no-session" style="text-align: center; color: #94a3b8;">
+                    <p>👈 Select an incident to begin</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="card" style="display: none;" id="obs-card">
+            <h2>Incident Context</h2>
+            <div class="observation-box" id="obs-display"></div>
+        </div>
+
+        <div class="card" style="display: none;" id="findings-card">
+            <h2>📚 Agent Findings History</h2>
+            <div id="findings-display" style="max-height: 400px; overflow-y: auto;"></div>
+        </div>
+
+        <div class="card" style="margin-top: 20px;">
+            <h2>Training Metrics</h2>
+            <div id="metrics-display"></div>
+        </div>
+    </div>
+
+    <script>
+        let currentSession = null;
+        let currentObservation = null;
+        const API_BASE = window.location.origin;
+
+        async function init() {
+            await loadIncidents();
+            await loadMetrics();
+            // Setup SRE runbook dropdown toggle
+            const sreCheckbox = document.getElementById('dispatch-sre');
+            const sreOptions = document.getElementById('sre-runbook-options');
+            sreCheckbox.addEventListener('change', (e) => {
+                sreOptions.style.display = e.target.checked ? 'block' : 'none';
+            });
+        }
+
+        async function loadIncidents() {
+            try {
+                const res = await fetch(`${API_BASE}/incidents`);
+                const data = await res.json();
+                const list = document.getElementById('incidents-list');
+                list.innerHTML = '';
+                data.incidents.forEach(inc => {
+                    const div = document.createElement('div');
+                    div.className = 'incident-item';
+                    div.onclick = () => selectAndStartIncident(inc.case_id, div);
+                    div.innerHTML = `<div class="incident-title">${inc.case_id}: ${inc.title}</div><div class="incident-meta"><span class="status-badge status-${inc.difficulty}">${inc.difficulty}</span><span class="status-badge severity-${inc.severity}">${inc.severity}</span></div>`;
+                    list.appendChild(div);
+                });
+            } catch (e) { showMessage('Error loading incidents: ' + e.message, 'error'); }
+        }
+
+        async function selectAndStartIncident(incidentId, element) {
+            document.querySelectorAll('.incident-item').forEach(el => el.style.borderLeftColor = '#60a5fa');
+            element.style.borderLeftColor = '#a78bfa';
+            window.selectedIncident = incidentId;
+
+            // Fetch and display incident details
+            await loadIncidentDetails(incidentId);
+
+            showMessage(`Loading ${incidentId}...`, 'info');
+            await startEpisode();
+        }
+
+        async function loadIncidentDetails(incidentId) {
+            try {
+                const res = await fetch(`${API_BASE}/incidents/${incidentId}`);
+                const inc = await res.json();
+                const details = document.getElementById('selected-incident-details');
+                const content = document.getElementById('details-content');
+
+                let html = `<div><strong>Title:</strong> ${inc.title}</div>`;
+                html += `<div><strong>Severity:</strong> <span class="severity-${inc.severity}">${inc.severity}</span></div>`;
+                html += `<div><strong>Services:</strong> ${inc.affected_services.slice(0, 2).join(', ')}</div>`;
+                if (inc.competing_hypotheses && inc.competing_hypotheses.length > 0) {
+                    html += `<div><strong>Hypotheses:</strong> ${inc.competing_hypotheses.length}</div>`;
+                }
+                html += `<div><strong>Max Steps:</strong> ${inc.max_steps}</div>`;
+
+                content.innerHTML = html;
+                details.style.display = 'block';
+            } catch (e) {
+                console.error('Error loading incident details:', e);
+            }
+        }
+
+        async function startEpisode() {
+            const incidentId = window.selectedIncident;
+            const difficulty = document.getElementById('difficulty').value || undefined;
+            if (!incidentId) { showMessage('Select an incident first', 'error'); return; }
+            try {
+                const btn = document.querySelector('button.btn-primary') || (event && event.target);
+                if (btn) { btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>Starting...'; }
+                const res = await fetch(`${API_BASE}/reset`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({incident_id: incidentId, difficulty}) });
+                const data = await res.json();
+                currentSession = data.session_id;
+                // Flatten the response: /reset returns {session_id, observation: {...}}
+                currentObservation = data.observation || data;
+                updateSessionDisplay();
+                updateObservationDisplay();
+                showMessage('Episode started', 'success');
+                if (btn) { btn.disabled = false; btn.innerHTML = 'Start New Episode'; }
+            } catch (e) {
+                showMessage('Error: ' + e.message, 'error');
+                const btn = document.querySelector('button.btn-primary') || (event && event.target);
+                if (btn) { btn.disabled = false; btn.innerHTML = 'Start New Episode'; }
+            }
+        }
+
+        async function stepEpisode() {
+            if (!currentSession) return;
+            try {
+                const btn = document.getElementById('btn-execute');
+                if (btn) { btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>Stepping...'; }
+
+                const action = {
+                    situation_assessment: document.getElementById('assessment').value,
+                    hypothesis: document.getElementById('hypothesis').value,
+                    resolution_confidence: parseFloat(document.getElementById('confidence').value)
+                };
+
+                // Add specialist directives based on checkboxes
+                if (document.getElementById('dispatch-l2').checked) {
+                    action.l2_directive = {
+                        action: 'check_all_alerts',
+                        parameters: {},
+                        reasoning: 'Investigate metrics and alerts'
+                    };
+                }
+                if (document.getElementById('dispatch-l1').checked) {
+                    action.l1_directive = {
+                        action: 'check_customer_reports',
+                        parameters: {},
+                        reasoning: 'Check customer impact and communicate'
+                    };
+                }
+                if (document.getElementById('dispatch-sre').checked) {
+                    const sreSelect = document.getElementById('sre-runbook-step');
+                    const selectedStep = sreSelect.value || 'rb_heap_profile';
+                    action.sre_directive = {
+                        action: 'execute_runbook_step',
+                        parameters: { step_id: selectedStep },
+                        reasoning: 'Execute selected infrastructure step'
+                    };
+                }
+                if (document.getElementById('dispatch-pm').checked) {
+                    action.pm_directive = {
+                        action: 'track_revenue_impact',
+                        parameters: {},
+                        reasoning: 'Track business impact'
+                    };
+                }
+
+                const res = await fetch(`${API_BASE}/step/${currentSession}`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(action) });
+                const data = await res.json();
+                currentObservation = data.observation;
+                if (data.done) { showMessage('Episode complete! Reward: ' + data.reward.toFixed(4), 'success'); displayReward(data.info.reward_breakdown); } else { showMessage(`Step ${data.info.step} executed (${Object.keys(action).filter(k => action[k] && k.includes('directive')).length} directives)`, 'success'); }
+                updateObservationDisplay();
+                updateSessionDisplay();
+                // Clear form fields and uncheck directives for next step (unless episode is done)
+                if (!data.done) {
+                    document.getElementById('assessment').value = '';
+                    document.getElementById('hypothesis').value = '';
+                    document.getElementById('confidence').value = '0.0';
+                    document.getElementById('dispatch-l2').checked = false;
+                    document.getElementById('dispatch-l1').checked = false;
+                    document.getElementById('dispatch-sre').checked = false;
+                    document.getElementById('dispatch-pm').checked = false;
+                    document.getElementById('sre-runbook-step').value = '';
+                    document.getElementById('sre-runbook-options').style.display = 'none';
+                }
+                if (btn) { btn.disabled = false; btn.innerHTML = '▶ Execute Step'; }
+            } catch (e) {
+                showMessage('Error: ' + e.message, 'error');
+                const btn = document.getElementById('btn-execute');
+                if (btn) { btn.disabled = false; btn.innerHTML = '▶ Execute Step'; }
+            }
+        }
+
+        async function endEpisode() {
+            if (!currentSession) return;
+            document.getElementById('confidence').value = 0.85;
+            await stepEpisode();
+        }
+
+        function autoFillTestData() {
+            if (!currentObservation) {
+                showMessage('Start an episode first', 'error');
+                return;
+            }
+
+            // Generate assessment from observation
+            let assessment = '';
+            if (currentObservation.incident_title) assessment += `Incident: ${currentObservation.incident_title}. `;
+
+            // Handle initial_alerts (is array of objects like [{summary: '...'}])
+            if (currentObservation.initial_alerts && Array.isArray(currentObservation.initial_alerts) && currentObservation.initial_alerts.length > 0) {
+                const alert = currentObservation.initial_alerts[0];
+                const alertText = typeof alert === 'string' ? alert : (alert.summary || '');
+                if (alertText) assessment += alertText + ' ';
+            }
+
+            // Handle customer_reports (is array of strings)
+            if (currentObservation.customer_reports && Array.isArray(currentObservation.customer_reports) && currentObservation.customer_reports.length > 0) {
+                assessment += currentObservation.customer_reports[0] + ' ';
+            }
+
+            // Handle agent_findings
+            if (currentObservation.agent_findings && Array.isArray(currentObservation.agent_findings) && currentObservation.agent_findings.length > 0) {
+                assessment += `Received ${currentObservation.agent_findings.length} agent finding(s). `;
+            }
+
+            // Handle affected_regions
+            if (currentObservation.affected_regions && Array.isArray(currentObservation.affected_regions) && currentObservation.affected_regions.length > 0) {
+                const regions = currentObservation.affected_regions.filter(r => r && r !== 'unknown');
+                if (regions.length > 0) assessment += `Affected regions: ${regions.join(', ')}`;
+            }
+
+            // Generate hypothesis from competing hypotheses
+            let hypothesis = 'Unable to determine root cause';
+            if (currentObservation.competing_hypotheses && Array.isArray(currentObservation.competing_hypotheses) && currentObservation.competing_hypotheses.length > 0) {
+                hypothesis = currentObservation.competing_hypotheses[0];
+            }
+
+            // Set confidence based on step count (higher step = higher confidence)
+            let confidence = 0.2 + (currentObservation.step || 0) * 0.1;
+            confidence = Math.min(confidence, 0.95);
+
+            // Fill form fields
+            const assessmentText = assessment.trim() || 'Investigating incident...';
+            document.getElementById('assessment').value = assessmentText;
+            document.getElementById('hypothesis').value = hypothesis.trim();
+            document.getElementById('confidence').value = confidence.toFixed(2);
+
+            // Auto-select dispatcher checkboxes based on phase
+            const phase = currentObservation.phase || 'detection';
+            document.getElementById('dispatch-l2').checked = ['detection', 'triage', 'investigation'].includes(phase);
+            document.getElementById('dispatch-l1').checked = ['detection', 'triage'].includes(phase);
+            document.getElementById('dispatch-sre').checked = ['investigation', 'mitigation'].includes(phase);
+            document.getElementById('dispatch-pm').checked = ['mitigation', 'resolution'].includes(phase);
+
+            // Auto-select runbook step based on phase and step count
+            const sreCheckbox = document.getElementById('dispatch-sre');
+            const sreSelect = document.getElementById('sre-runbook-step');
+            const sreOptions = document.getElementById('sre-runbook-options');
+            if (sreCheckbox.checked) {
+                const step = currentObservation.step || 0;
+                let selectedStep = 'rb_heap_profile';
+                if (phase === 'mitigation' && step >= 4) {
+                    selectedStep = step >= 5 ? 'rb_set_cache_eviction' : 'rb_check_cache_config';
+                }
+                sreSelect.value = selectedStep;
+                sreOptions.style.display = 'block';
+            } else {
+                sreSelect.value = '';
+                sreOptions.style.display = 'none';
+            }
+
+            showMessage(`✅ Test data filled! Assessment ready. Confidence: ${confidence.toFixed(2)}. Dispatching agents for ${phase} phase.`, 'success');
+        }
+
+        function updateSessionDisplay() {
+            if (!currentSession) { document.getElementById('episode-display').style.display = 'none'; document.getElementById('no-session').style.display = 'block'; return; }
+            document.getElementById('episode-display').style.display = 'block';
+            document.getElementById('no-session').style.display = 'none';
+            const obs = currentObservation;
+            const difficulty = obs.difficulty || 'unknown';
+            const difficultyBadge = `<span class="status-badge status-${difficulty}">${difficulty}</span>`;
+            document.getElementById('session-info').innerHTML = `<strong>Incident:</strong> ${obs.incident_id}<br><strong>Difficulty:</strong> ${difficultyBadge}<br><strong>Status:</strong> <span style="color: ${obs.done ? '#ef4444' : '#10b981'};">${obs.done ? '✓ Complete' : '● Active'}</span>`;
+            document.getElementById('current-phase').textContent = obs.phase || 'detection';
+            document.getElementById('current-step').textContent = obs.step || 0;
+            document.getElementById('max-steps').textContent = obs.max_steps || 50;
+            document.getElementById('elapsed-minutes').textContent = (obs.elapsed_minutes || 0).toFixed(1);
+        }
+
+        function getAgentColor(agent) {
+            const colors = {
+                'incident_commander': 'agent-ic',
+                'l1_support': 'agent-l1',
+                'l2_engineer': 'agent-l2',
+                'sre_agent': 'agent-sre',
+                'product_manager': 'agent-pm'
+            };
+            return colors[agent] || 'agent-ic';
+        }
+
+        function updateObservationDisplay() {
+            if (!currentObservation) return;
+            const display = document.getElementById('obs-display');
+            const findingsDisplay = document.getElementById('findings-display');
+            const card = document.getElementById('obs-card');
+            const findingsCard = document.getElementById('findings-card');
+            card.style.display = 'block';
+            const obs = currentObservation;
+            const alerts = obs.initial_alerts || [];
+            const findings = obs.agent_findings || [];
+            const hypotheses = obs.competing_hypotheses || [];
+            const services = obs.affected_services || [];
+            const regions = obs.affected_regions || [];
+
+            let html = '<h4>🚨 Incident Context <span style="color: #94a3b8; font-size: 0.85em;">(Phase: ' + (obs.phase || 'detection') + ')</span></h4>';
+            html += `<div style="margin-bottom: 12px;"><strong>Title:</strong> ${obs.incident_title}</div>`;
+            html += `<div style="margin-bottom: 12px;"><strong>Severity:</strong> <span class="severity-${obs.severity}">${obs.severity}</span></div>`;
+            html += `<div style="margin-bottom: 12px; color: #a78bfa;"><strong>Step:</strong> ${obs.step || 0} / ${obs.max_steps || 50}</div>`;
+
+            if (services.length > 0 && !services[0].includes('unknown')) {
+                html += '<h4>📦 Affected Services</h4><ul style="margin: 10px 0;"><li>' + services.join('</li><li>') + '</li></ul>';
+            }
+            if (regions.length > 0) {
+                html += '<h4>🌍 Affected Regions</h4><ul style="margin: 10px 0;"><li>' + regions.join('</li><li>') + '</li></ul>';
+            }
+            if (alerts.length > 0) {
+                html += '<h4>🔔 Active Alerts</h4><pre style="font-size: 0.85em;">' + alerts.map(a => {
+                    if (typeof a === 'string') return a;
+                    if (a.summary) return a.summary;
+                    return `${a.service}: ${a.metric} = ${a.value} (threshold: ${a.threshold})`;
+                }).join('\n') + '</pre>';
+            }
+            if (hypotheses.length > 0) {
+                html += '<h4>🔍 Competing Hypotheses</h4><ul style="margin: 10px 0; color: #f59e0b;"><li>' + hypotheses.join('</li><li>') + '</li></ul>';
+            }
+            display.innerHTML = html;
+
+            // Findings history with agent coloring
+            if (findings.length > 0) {
+                findingsCard.style.display = 'block';
+                let findingsHtml = '';
+                findings.forEach((f, idx) => {
+                    const agentClass = getAgentColor(f.agent);
+                    const agentLabel = f.agent.replace(/_/g, ' ').toUpperCase();
+                    const isNew = idx === findings.length - 1 ? 'style="box-shadow: 0 0 8px rgba(34,197,94,0.4);"' : '';
+                    findingsHtml += `<div class="finding-item ${agentClass}" ${isNew}><span class="finding-agent" style="background: inherit; color: white;">${agentLabel}</span><div>${f.finding}</div></div>`;
+                });
+                findingsDisplay.innerHTML = findingsHtml;
+            } else {
+                findingsCard.style.display = 'none';
+            }
+        }
+
+        function displayReward(breakdown) {
+            if (!breakdown) return;
+            const section = document.getElementById('reward-section');
+            const div = document.getElementById('reward-breakdown');
+            div.innerHTML = `
+                <div class="reward-item"><div class="reward-label">MTTR</div><div class="reward-value">${breakdown.mttr.toFixed(3)}</div></div>
+                <div class="reward-item"><div class="reward-label">Diagnosis</div><div class="reward-value">${breakdown.diagnosis.toFixed(3)}</div></div>
+                <div class="reward-item"><div class="reward-label">Customer</div><div class="reward-value">${breakdown.customer.toFixed(3)}</div></div>
+                <div class="reward-item"><div class="reward-label">Coordination</div><div class="reward-value">${breakdown.coordination.toFixed(3)}</div></div>
+                <div class="reward-item"><div class="reward-label">Oversight</div><div class="reward-value">${breakdown.oversight.toFixed(3)}</div></div>
+                <div class="reward-item"><div class="reward-label">Depth Bonus</div><div class="reward-value">${(breakdown.depth_bonus || 0).toFixed(3)}</div></div>
+                <div class="reward-item" style="grid-column: 1 / -1; border-left-color: #4ade80;"><div class="reward-label">TOTAL</div><div class="reward-value">${breakdown.total.toFixed(3)}</div></div>
+            `;
+            section.style.display = 'block';
+        }
+
+        async function loadMetrics() {
+            try {
+                const res = await fetch(`${API_BASE}/metrics`);
+                const data = await res.json();
+                const display = document.getElementById('metrics-display');
+                display.innerHTML = `<p><strong>Episodes:</strong> ${data.episode_count}</p><p><strong>Avg:</strong> ${data.avg_reward ? data.avg_reward.toFixed(4) : 'N/A'}</p><p><strong>Best:</strong> ${data.best_reward ? data.best_reward.toFixed(4) : 'N/A'}</p><p><strong>Recent:</strong> ${data.recent_avg ? data.recent_avg.toFixed(4) : 'N/A'}</p>`;
+            } catch (e) { console.error('Error:', e); }
+        }
+
+        function showMessage(msg, type = 'info') {
+            const container = document.getElementById('messages');
+            const div = document.createElement('div');
+            div.className = type === 'error' ? 'error-msg' : 'success-msg';
+            div.textContent = msg;
+            container.appendChild(div);
+            setTimeout(() => div.remove(), 5000);
+        }
+
+        window.addEventListener('load', init);
+    </script>
+</body>
+</html>

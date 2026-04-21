@@ -1,0 +1,199 @@
+name: nexus-enhanced
+version: 1.0.0
+openenv_version: "0.2.3"
+description: >
+  Multi-Agent Enterprise Incident Response RL Environment.
+  Six agents coordinate across five simulated enterprise tools to detect, investigate,
+  and resolve production incidents of escalating severity — culminating in a
+  CrowdStrike-scale global failure scenario (INC007).
+
+author: Team Falcons
+contact: kunalkachru23@gmail.com
+
+# OpenEnv required fields
+observation_type: partial
+action_type: structured_dict
+num_agents: 6
+multi_agent: true
+external_state: true
+
+# Episode configuration
+episodes:
+  min_steps: 3
+  max_steps: 45
+  difficulty_tiers:
+    - easy
+    - medium
+    - hard
+    - very_hard
+    - nightmare
+
+# Agent definitions
+agents:
+  - name: incident_commander
+    role: coordinator
+    trained: true
+    training_algorithm: GRPO
+    tools: [datadog, slack, jira, runbook, customer_portal]
+
+  - name: l1_support
+    role: specialist
+    trained: false  # Scripted during training
+    tools: [slack, customer_portal]
+
+  - name: l2_engineer
+    role: specialist
+    trained: false
+    tools: [datadog, slack, runbook]
+
+  - name: sre_agent
+    role: specialist
+    trained: false
+    tools: [datadog, runbook, jira]
+
+  - name: product_manager
+    role: specialist
+    trained: false
+    tools: [jira, customer_portal, slack]
+
+  - name: oversight_agent
+    role: monitor
+    trained: false
+    tools: [datadog, slack, jira, runbook, customer_portal]
+
+# Tool definitions
+tools:
+  - name: datadog
+    type: metrics_monitoring
+    rate_limited: true
+    rate_limit: 3 unique metric+service combinations per episode
+
+  - name: slack
+    type: communication
+    rate_limited: false
+
+  - name: jira
+    type: ticket_management
+    business_rules:
+      - VP approval required for revenue impact > $100k
+      - Change freeze windows block non-emergency closures
+
+  - name: runbook
+    type: procedure_execution
+    schema_drift: true  # INC007 only: v1.0 -> v2.0 at step 18-22
+
+  - name: customer_portal
+    type: customer_communication
+    schema_drift: true  # INC007 only: GDPR compliance required in v2.0
+
+# Incident library
+tasks:
+  - id: INC001
+    title: Payment Service Timeout Storm
+    difficulty: easy
+    severity: P1
+    max_steps: 20
+    optimal_mttr_minutes: 18
+
+  - id: INC002
+    title: Database Connection Pool Exhaustion
+    difficulty: easy
+    severity: P2
+    max_steps: 22
+    optimal_mttr_minutes: 22
+
+  - id: INC003
+    title: Memory Leak Under Load
+    difficulty: medium
+    severity: P2
+    max_steps: 28
+    optimal_mttr_minutes: 28
+    demo: true  # Used in 90-second demo
+
+  - id: INC004
+    title: Third-Party API Failure Masked by Retry Logic
+    difficulty: hard
+    severity: P1
+    max_steps: 30
+    optimal_mttr_minutes: 35
+
+  - id: INC005
+    title: Config Deployment Error with Conflicting Signals
+    difficulty: hard
+    severity: P1
+    max_steps: 30
+    optimal_mttr_minutes: 25
+
+  - id: INC006
+    title: Multi-Region Cascade — Global CDN Misrouting
+    difficulty: very_hard
+    severity: P1
+    max_steps: 35
+    optimal_mttr_minutes: 42
+
+  - id: INC007
+    title: CrowdStrike-Scale Global Infrastructure Failure
+    difficulty: nightmare
+    severity: P1
+    max_steps: 45
+    optimal_mttr_minutes: 90
+    schema_drift_step: 18
+    qa_demo: true  # Used in Q&A coalition debate demo
+
+# Reward model
+reward:
+  type: multi_dimensional_sparse
+  dimensions:
+    mttr: 0.30
+    diagnosis: 0.25
+    customer: 0.20
+    coordination: 0.15
+    oversight: 0.05
+  bonus:
+    name: reasoning_depth
+    type: uncapped
+    sponsor: Mercor
+
+# Sub-theme coverage
+sub_themes:
+  - sponsor: Scaler AI Labs
+    theme: Multi-App Enterprise RL
+    mechanic: 5 enterprise tools with business rule nuances
+  - sponsor: Fleet AI
+    theme: Scalable Oversight
+    mechanic: OversightAgent with monitor + analyse + explain
+  - sponsor: Halluminate
+    theme: Multi-Actor Environments
+    mechanic: 6 agents + coalition debate + partial observability
+  - sponsor: Scale AI
+    theme: Non-Code Business (IT)
+    mechanic: IT incident management domain
+  - sponsor: Mercor
+    theme: Token-Scaled Rewards
+    mechanic: Uncapped reasoning depth bonus on postmortem quality
+  - sponsor: Snorkel AI
+    theme: Simulated Experts-in-Loop
+    mechanic: Rotating expert review board (4 criteria, episode % 4)
+  - sponsor: Patronus AI
+    theme: Schema Drift
+    mechanic: RunBook and CustomerPortal field renames in INC007 at step 18-22
+
+# API server
+server:
+  framework: FastAPI
+  default_port: 7860
+  health_endpoint: /health
+  reset_endpoint: /reset
+  step_endpoint: /step/{session_id}
+  state_endpoint: /state/{session_id}
+  demo_endpoint: /demo/run/{incident_id}
+
+# Training
+training:
+  algorithm: GRPO
+  framework: HuggingFace TRL + Unsloth
+  model: Qwen2.5-7B-Instruct
+  quantization: 4-bit LoRA
+  notebook: notebooks/grpo_colab.ipynb
+  trained_agent: incident_commander
+  scripted_agents: [l1_support, l2_engineer, sre_agent, product_manager]

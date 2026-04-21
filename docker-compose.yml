@@ -1,0 +1,86 @@
+version: '3.8'
+
+services:
+  # FastAPI backend — core NEXUS environment (unchanged)
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: uvicorn server.app:app --host 0.0.0.0 --port 7862 --reload
+    container_name: nexus-backend
+    ports:
+      - "7862:7862"
+    environment:
+      - PYTHONUNBUFFERED=1
+      - PORT=7862
+    volumes:
+      - ./server:/app/server
+      - ./training_artifacts:/app/training_artifacts
+    networks:
+      - nexus_network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:7862/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  # Gradio dashboard — primary UI
+  gradio:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: python gradio_app.py
+    container_name: nexus-gradio
+    ports:
+      - "7861:7860"
+    depends_on:
+      backend:
+        condition: service_healthy
+    environment:
+      - PYTHONUNBUFFERED=1
+      - API_BASE=http://backend:7862
+    volumes:
+      - ./gradio_app.py:/app/gradio_app.py
+      - ./web:/app/web
+    networks:
+      - nexus_network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:7860/config"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  # Router + fallback — switches to HTML if Gradio broken
+  fallback:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: python router.py
+    container_name: nexus-router
+    ports:
+      - "7860:7860"
+    depends_on:
+      - backend
+      - gradio
+    environment:
+      - PYTHONUNBUFFERED=1
+    volumes:
+      - ./web:/app/web
+    networks:
+      - nexus_network
+
+networks:
+  nexus_network:
+    driver: bridge
+
+# Quick commands:
+# docker-compose up           — Start all services
+# docker-compose down         — Stop all services
+# docker-compose logs gradio  — Watch Gradio logs
+# docker-compose ps           — See status
+#
+# URLs:
+# http://localhost:7860       — Router (routes to Gradio, falls back to HTML)
+# http://localhost:7861       — Direct Gradio
+# http://localhost:7862       — Direct backend API
+# http://localhost:7860/fallback/html — Direct HTML fallback
