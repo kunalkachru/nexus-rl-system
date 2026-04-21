@@ -673,13 +673,20 @@
 
         async function fetchLearningCurve() {
             try {
+                console.log('[fetchLearningCurve] Starting fetch at', new Date().toISOString());
+
                 const response = await fetch('/learning-curve');
                 const data = await response.json();
+                console.log('[fetchLearningCurve] API response:', data);
 
                 const rewards = data.rewards || [];
                 const baseline = data.baseline || 0.265;
+                console.log('[fetchLearningCurve] Parsed rewards length:', rewards.length, 'baseline:', baseline);
 
-                if (!rewards.length) return;
+                if (!rewards.length) {
+                    console.warn('[fetchLearningCurve] No rewards data, returning early');
+                    return;
+                }
 
                 // SVG dimensions
                 const width = 1100, height = 350;
@@ -770,10 +777,28 @@
                 svg += `<text x="${width - 180}" y="${legendY + 44}" fill="#e2e8f0">Baseline</text>`;
 
                 svg += `</svg>`;
+                console.log('[fetchLearningCurve] SVG string built, length:', svg.length);
+                console.log('[fetchLearningCurve] SVG preview:', svg.substring(0, 200) + '...');
 
-                document.getElementById('rewardChart').innerHTML = svg;
+                const chartDiv = document.getElementById('rewardChart');
+                console.log('[fetchLearningCurve] Chart div found:', chartDiv !== null, 'Element:', chartDiv);
+
+                if (!chartDiv) {
+                    console.error('[fetchLearningCurve] rewardChart div not found in DOM');
+                    return;
+                }
+
+                console.log('[fetchLearningCurve] Before innerHTML assignment - div.innerHTML.length:', chartDiv.innerHTML.length);
+                chartDiv.innerHTML = svg;
+                console.log('[fetchLearningCurve] After innerHTML assignment - div.innerHTML.length:', chartDiv.innerHTML.length);
+
+                // Verify the assignment persisted
+                const verifyContent = document.getElementById('rewardChart').innerHTML;
+                console.log('[fetchLearningCurve] Verification - actual innerHTML.length:', verifyContent.length);
+                console.log('[fetchLearningCurve] SVG rendering complete');
             } catch (e) {
-                console.error('Error fetching learning curve:', e);
+                console.error('[fetchLearningCurve] Error:', e);
+                console.error('[fetchLearningCurve] Stack:', e.stack);
             }
         }
 
