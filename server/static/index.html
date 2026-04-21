@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>NEXUS Enhanced — Incident Response Training</title>
-    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <!-- Chart rendering via pure SVG (no external dependencies) -->
     <style>
         * {
             margin: 0;
@@ -678,9 +678,22 @@
 
                 const rewards = data.rewards || [];
                 const baseline = data.baseline || 0.265;
-                const episodes = rewards.map((_, i) => i + 1);
 
-                // Calculate rolling average (5-episode window)
+                if (!rewards.length) return;
+
+                // SVG dimensions
+                const width = 1100, height = 350;
+                const margin = { top: 20, right: 30, bottom: 30, left: 60 };
+                const plotWidth = width - margin.left - margin.right;
+                const plotHeight = height - margin.top - margin.bottom;
+
+                // Scale data
+                const maxX = rewards.length;
+                const maxY = 1.0;
+                const scaleX = plotWidth / maxX;
+                const scaleY = plotHeight / maxY;
+
+                // Calculate rolling average
                 const rolling = [];
                 for (let i = 0; i < rewards.length; i++) {
                     const start = Math.max(0, i - 4);
@@ -688,46 +701,77 @@
                     rolling.push(chunk.reduce((a, b) => a + b, 0) / chunk.length);
                 }
 
-                // Plotly data
-                const trace1 = {
-                    x: episodes,
-                    y: rewards,
-                    name: 'Episode Reward',
-                    mode: 'lines+markers',
-                    line: { color: '#0ea5e9', width: 2 },
-                    marker: { size: 5 },
-                    fill: 'tozeroy',
-                    fillcolor: 'rgba(14, 165, 233, 0.1)'
-                };
+                // Build SVG
+                let svg = `<svg viewBox="0 0 ${width} ${height}" style="width:100%; height:100%; border:none;">`;
+                svg += `<style>text{font-size:11px;font-family:sans-serif}line{stroke:#334155}</style>`;
 
-                const trace2 = {
-                    x: episodes,
-                    y: rolling,
-                    name: '5-Episode Rolling Avg',
-                    mode: 'lines',
-                    line: { color: '#10b981', width: 3 }
-                };
+                // Background
+                svg += `<rect width="${width}" height="${height}" fill="#0f172a"/>`;
 
-                const trace3 = {
-                    x: episodes,
-                    y: Array(rewards.length).fill(baseline),
-                    name: 'Baseline (Untrained)',
-                    mode: 'lines',
-                    line: { color: '#ef4444', width: 2, dash: 'dash' }
-                };
+                // Grid
+                for (let i = 0; i <= 10; i++) {
+                    const y = margin.top + (plotHeight / 10) * i;
+                    svg += `<line x1="${margin.left}" y1="${y}" x2="${width - margin.right}" y2="${y}" stroke="#334155" stroke-dasharray="2,2" opacity="0.5"/>`;
+                }
 
-                const layout = {
-                    title: 'NEXUS Training Progress: Observable Reward Improvement',
-                    xaxis: { title: 'Episode', color: '#94a3b8' },
-                    yaxis: { title: 'Reward Score', range: [0, 1], color: '#94a3b8' },
-                    plot_bgcolor: '#1e293b',
-                    paper_bgcolor: '#0f172a',
-                    font: { color: '#e2e8f0', size: 12 },
-                    hovermode: 'x unified',
-                    margin: { l: 60, r: 30, t: 50, b: 50 }
-                };
+                // Axes
+                svg += `<line x1="${margin.left}" y1="${margin.top}" x2="${margin.left}" y2="${height - margin.bottom}" stroke="#94a3b8" stroke-width="2"/>`;
+                svg += `<line x1="${margin.left}" y1="${height - margin.bottom}" x2="${width - margin.right}" y2="${height - margin.bottom}" stroke="#94a3b8" stroke-width="2"/>`;
 
-                Plotly.newPlot('rewardChart', [trace1, trace2, trace3], layout, { responsive: true, displayModeBar: false });
+                // Y-axis labels
+                for (let i = 0; i <= 10; i++) {
+                    const value = (i / 10).toFixed(1);
+                    const y = margin.top + (plotHeight / 10) * i;
+                    svg += `<text x="${margin.left - 10}" y="${y + 4}" text-anchor="end" fill="#94a3b8">${value}</text>`;
+                }
+
+                // Baseline line
+                const baselineY = margin.top + plotHeight - (baseline * scaleY);
+                svg += `<line x1="${margin.left}" y1="${baselineY}" x2="${width - margin.right}" y2="${baselineY}" stroke="#ef4444" stroke-width="2" stroke-dasharray="5,5"/>`;
+
+                // Rolling average line (green)
+                let rollingPath = `M ${margin.left} ${margin.top + plotHeight - (rolling[0] * scaleY)}`;
+                for (let i = 1; i < rolling.length; i++) {
+                    const x = margin.left + i * scaleX;
+                    const y = margin.top + plotHeight - (rolling[i] * scaleY);
+                    rollingPath += ` L ${x} ${y}`;
+                }
+                svg += `<path d="${rollingPath}" stroke="#10b981" stroke-width="3" fill="none"/>`;
+
+                // Episode reward points and line (blue)
+                let rewardPath = `M ${margin.left} ${margin.top + plotHeight - (rewards[0] * scaleY)}`;
+                for (let i = 1; i < rewards.length; i++) {
+                    const x = margin.left + i * scaleX;
+                    const y = margin.top + plotHeight - (rewards[i] * scaleY);
+                    rewardPath += ` L ${x} ${y}`;
+                }
+                svg += `<path d="${rewardPath}" stroke="#0ea5e9" stroke-width="1.5" fill="none" opacity="0.8"/>`;
+
+                // Points
+                for (let i = 0; i < rewards.length; i++) {
+                    const x = margin.left + i * scaleX;
+                    const y = margin.top + plotHeight - (rewards[i] * scaleY);
+                    svg += `<circle cx="${x}" cy="${y}" r="2" fill="#0ea5e9"/>`;
+                }
+
+                // Title & legend
+                svg += `<text x="${width/2}" y="15" text-anchor="middle" fill="#e2e8f0" font-weight="bold">NEXUS Training Progress: Observable Reward Improvement</text>`;
+                svg += `<text x="${margin.left}" y="${height - 5}" fill="#94a3b8">Episode</text>`;
+                svg += `<text x="20" y="${margin.top + plotHeight/2}" fill="#94a3b8" text-anchor="middle" transform="rotate(-90 20 ${margin.top + plotHeight/2})">Reward Score</text>`;
+
+                // Legend
+                const legendY = margin.top + 40;
+                svg += `<rect x="${width - 220}" y="${legendY - 15}" width="200" height="70" fill="#1e293b" stroke="#334155"/>`;
+                svg += `<line x1="${width - 210}" y1="${legendY}" x2="${width - 190}" y2="${legendY}" stroke="#0ea5e9" stroke-width="2"/>`;
+                svg += `<text x="${width - 180}" y="${legendY + 4}" fill="#e2e8f0">Episode Reward</text>`;
+                svg += `<line x1="${width - 210}" y1="${legendY + 20}" x2="${width - 190}" y2="${legendY + 20}" stroke="#10b981" stroke-width="3"/>`;
+                svg += `<text x="${width - 180}" y="${legendY + 24}" fill="#e2e8f0">5-Ep Rolling Avg</text>`;
+                svg += `<line x1="${width - 210}" y1="${legendY + 40}" x2="${width - 190}" y2="${legendY + 40}" stroke="#ef4444" stroke-width="2" stroke-dasharray="5,5"/>`;
+                svg += `<text x="${width - 180}" y="${legendY + 44}" fill="#e2e8f0">Baseline</text>`;
+
+                svg += `</svg>`;
+
+                document.getElementById('rewardChart').innerHTML = svg;
             } catch (e) {
                 console.error('Error fetching learning curve:', e);
             }
