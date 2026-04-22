@@ -194,6 +194,6 @@ training:
   framework: HuggingFace TRL + Unsloth
   model: Qwen2.5-7B-Instruct
   quantization: 4-bit LoRA
-  notebook: notebooks/grpo_colab.ipynb
+  notebook: notebooks/grpo_colab_v2.ipynb
   trained_agent: incident_commander
   scripted_agents: [l1_support, l2_engineer, sre_agent, product_manager]

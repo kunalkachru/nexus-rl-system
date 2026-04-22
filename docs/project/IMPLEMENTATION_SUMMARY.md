@@ -219,10 +219,8 @@ nexus-enhanced/
 ├── notebooks/
 │   └── grpo_colab_v2.ipynb             # Phase 4: GRPO training script
 │
-└── (legacy files not used in deployment)
-    ├── streamlit_app.py                # Older Streamlit version
-    ├── gradio_app.py                   # Gradio alternative UI
-    ├── docker-compose.yml              # Old multi-service compose
+└── Legacy files archived outside repo root
+    └── ../archive/nexus-enhanced/...   # See ARCHIVED_FILES_INDEX.md
 ```
 
 ---

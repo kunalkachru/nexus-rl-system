@@ -10,7 +10,7 @@ authors:
 *Team Falcons — Meta PyTorch OpenEnv Hackathon Grand Finale, April 2026*
 
 **Live Demo:** [huggingface.co/spaces/kunalkachru23/nexus-enhanced](https://huggingface.co/spaces/kunalkachru23/nexus-enhanced)  
-**Training Notebook:** [grpo_colab.ipynb](https://huggingface.co/spaces/kunalkachru23/nexus-enhanced/blob/main/notebooks/grpo_colab.ipynb)
+**Training Notebook:** [grpo_colab_v2.ipynb](https://huggingface.co/spaces/kunalkachru23/nexus-enhanced/blob/main/notebooks/grpo_colab_v2.ipynb)
 
 ---
 
@@ -148,7 +148,7 @@ https://huggingface.co/spaces/kunalkachru23/nexus-enhanced
 ```
 
 **Training notebook** (GRPO on Qwen2.5-1.5B, cells 1–3 run without GPU):  
-`notebooks/grpo_colab.ipynb` in the Space repo.
+`notebooks/grpo_colab_v2.ipynb` in the Space repo.
 
 ---
 
