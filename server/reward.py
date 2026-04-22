@@ -254,6 +254,14 @@ def compute_coordination_score(state: EpisodeState) -> float:
 
     score -= 0.1 * min(duplicate_count, 3)  # Cap penalty at 3 duplicates
 
+    # Low-signal directive penalty — repeated acknowledgements/no-op actions
+    # should not look like productive coordination.
+    low_signal_findings = sum(
+        1 for f in state.agent_findings
+        if "acknowledged" in f.finding.lower() or f.tool_used.lower() in {"no_op", "noop"}
+    )
+    score -= 0.05 * min(low_signal_findings, 4)
+
     # Coalition bonus
     if state.coalition_result:
         if state.coalition_correct:

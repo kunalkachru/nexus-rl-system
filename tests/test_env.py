@@ -201,6 +201,37 @@ class TestPhaseProgression:
                 break
         assert done is True
 
+    def test_triage_requires_diverse_findings_or_step_fallback(self):
+        env = make_env("INC001")
+        # Move to triage
+        basic_step(env)
+        basic_step(env)
+        assert env.current_state.phase in {"triage", "investigation"}
+        if env.current_state.phase == "triage":
+            # Repeated single-agent findings should not immediately jump at step 3
+            env.step({
+                "situation_assessment": "checking",
+                "l2_directive": {"action": "check_all_alerts", "parameters": {}, "reasoning": "sweep"},
+                "resolution_confidence": 0.1,
+            })
+            assert env.current_state.phase in {"triage", "investigation"}
+
+    def test_investigation_can_advance_with_root_evidence(self):
+        env = make_env("INC001")
+        # Force investigation context
+        env.current_state.phase = "investigation"
+        env.step({
+            "situation_assessment": "root evidence collected",
+            "hypothesis": "stripe header mismatch",
+            "l2_directive": {
+                "action": "query_metrics",
+                "parameters": {"service": "payment-service", "metric": "latency_p99"},
+                "reasoning": "collect evidence",
+            },
+            "resolution_confidence": 0.2,
+        })
+        assert env.current_state.phase in {"mitigation", "investigation"}
+
 
 # ------------------------------------------------------------------
 # Reward

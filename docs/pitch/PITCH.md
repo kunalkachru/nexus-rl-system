@@ -32,7 +32,7 @@
 ## Observable evidence (~35 s) — Criterion 3
 
 - Show **dashboard** reward curve and rolling average vs **baseline** (pre-event benchmark).
-- Use one canonical metrics callout (snapshot 2026-04-22 UTC): **episodes 120**, **avg 0.4063**, **best 0.9484**, **+53.3% vs baseline 0.265**.
+- Use one canonical metrics callout (snapshot `2026-04-22T17:25:11Z`): **episodes 120**, **avg 0.4063**, **best 0.9484**, **+53.3% vs baseline 0.265**.
 - One click: **Run Auto-Demo** on INC003 → completed episode + reward breakdown.
 - Optional: “We export the same curve for slides via `python scripts/export_reward_plot.py --url …`.”
 

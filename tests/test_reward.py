@@ -150,6 +150,22 @@ class TestCoordinationScore:
         s_coalition = make_state(coalition_result="correct hypothesis", coalition_correct=True)
         assert compute_coordination_score(s_coalition) > compute_coordination_score(s_no_coalition)
 
+    def test_low_signal_acknowledgements_penalised(self):
+        clean = make_state(
+            agent_findings=[
+                AgentFinding("l2_engineer", "critical memory trend found", 2, "query_metrics"),
+                AgentFinding("sre_agent", "runbook step completed", 3, "execute_runbook_step"),
+            ]
+        )
+        noisy = make_state(
+            agent_findings=[
+                AgentFinding("l2_engineer", "L2: check acknowledged", 2, "no_op"),
+                AgentFinding("sre_agent", "SRE: acknowledged", 3, "no_op"),
+                AgentFinding("product_manager", "PM: acknowledged", 4, "no_op"),
+            ]
+        )
+        assert compute_coordination_score(clean) > compute_coordination_score(noisy)
+
 
 class TestOversightScore:
     def test_no_findings_full_score(self):

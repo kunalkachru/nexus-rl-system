@@ -19,6 +19,9 @@ Stage URL: `https://kunalkachru23-nexus-enhanced-stage.hf.space`
    - Ready-to-publish variant: `docs/blog/blog_post_hf.md`
    - Owner action: publish final link and add URL to submission package.
 
+4. Compliance lock matrix
+   - BRD criterion and hard-gate mapping: `docs/project/COMPLIANCE_LOCK_MATRIX.md`
+
 ## Live metrics snapshot (Criterion 3 evidence)
 
 Source endpoints:
@@ -62,13 +65,22 @@ This writes timestamped snapshot files under `docs/project/snapshots/`.
 
 - 3-minute script: `docs/pitch/PITCH.md`
 - 2-minute live walkthrough: `docs/pitch/DEMO_WALKTHROUGH.md`
+- <2 minute recording script: `docs/pitch/YOUTUBE_RECORDING_SCRIPT.md`
 - Manual demo test cases: `docs/pitch/DEMO_MANUAL_TEST_CASES.md`
 - Criterion-4 behavior proof sheet: `docs/project/BEHAVIORAL_DELTA_PROOF.md`
 - Sub-theme matrix: `docs/project/SUBTHEME_EVIDENCE_MATRIX.md`
+- Reward-hacking defense: `docs/project/REWARD_HACKING_DEFENSE.md`
+- Training audit ledger: `docs/project/TRAINING_AUDIT_LOG.md`
+- Curriculum and ablation plan: `docs/project/CURRICULUM_AND_ABLATION.md`
+- Latest ablation snapshot: `docs/project/snapshots/reward_ablation_20260422T172510Z.md`
+- Final runbook: `docs/project/FINAL_OPERATIONS_RUNBOOK.md`
+- HF Space UI verification: `docs/project/UI_VERIFICATION_REPORT.md`
+- Final readiness report: `docs/project/FINAL_READINESS_REPORT.md`
 
 ## Submission-day proof checklist
 
 - Capture `openenv --version` screenshot.
 - Capture latest `/metrics` and `/learning-curve` snapshot.
+- Capture latest component metrics snapshot (`export_component_metrics.py`).
 - Confirm blog or <2 min video URL is live.
 - Keep stage URL and repo URL in final submission form.

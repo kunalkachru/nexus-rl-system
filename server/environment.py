@@ -321,12 +321,21 @@ class NexusEnvironment:
         if state.phase == "detection" and state.step >= 2:
             state.phase = "triage"
 
-        elif state.phase == "triage" and len(state.agent_findings) >= 2:
-            state.phase = "investigation"
+        elif state.phase == "triage":
+            # Require at least two findings and some cross-agent coverage before investigation.
+            # Fallback on step>=4 prevents deadlock when one specialist is repeatedly used.
+            active_agents = {f.agent for f in state.agent_findings}
+            if len(state.agent_findings) >= 2 and (len(active_agents) >= 2 or state.step >= 4):
+                state.phase = "investigation"
 
         elif state.phase == "investigation":
             # Advance to mitigation if hypothesis stated and evidence found
-            if state.hypotheses_stated and state.runbook_steps_completed:
+            root_service = state.incident.root_cause_service
+            evidence_found = any(
+                root_service in str(t.parameters) or root_service in str(t.result)
+                for t in state.tool_outputs
+            )
+            if state.hypotheses_stated and (state.runbook_steps_completed or evidence_found):
                 state.phase = "mitigation"
             # Also advance if coalition succeeded
             elif state.coalition_correct:
