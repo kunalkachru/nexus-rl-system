@@ -317,6 +317,24 @@
             box-shadow: 0 6px 12px rgba(6, 182, 212, 0.4);
         }
 
+        .validation-button-secondary {
+            width: 100%;
+            margin-bottom: 10px;
+            padding: 10px 16px;
+            border-radius: 6px;
+            border: 1px solid #475569;
+            background: #1e293b;
+            color: #e2e8f0;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s, border-color 0.2s;
+        }
+
+        .validation-button-secondary:hover {
+            background: #334155;
+            border-color: #64748b;
+        }
+
         .validation-results {
             background: #1e293b;
             border: 1px solid #334155;
@@ -358,8 +376,8 @@
 
         <!-- Tabs -->
         <div class="tabs">
-            <button class="tab-button active" onclick="switchTab('training')">📊 Training Metrics</button>
-            <button class="tab-button" onclick="switchTab('validation')">🧪 Manual Validation</button>
+            <button class="tab-button active" onclick="switchTab('training', event)">📊 Training Metrics</button>
+            <button class="tab-button" onclick="switchTab('validation', event)">🧪 Manual Validation</button>
         </div>
 
         <!-- Training Tab -->
@@ -454,12 +472,12 @@
 
                         <div class="form-group">
                             <label>Situation Assessment</label>
-                            <textarea id="situation-input" placeholder="Describe what you observe...">Investigating the incident...</textarea>
+                            <textarea id="situation-input" rows="4" placeholder="Describe what you observe (symptoms, scope, key metrics)..."></textarea>
                         </div>
 
                         <div class="form-group">
                             <label>Root Cause Hypothesis</label>
-                            <input type="text" id="hypothesis-input" placeholder="What do you think caused this?" value="investigating">
+                            <input type="text" id="hypothesis-input" placeholder="Your leading theory (mechanism + suspected component)">
                         </div>
 
                         <div class="form-group">
@@ -468,6 +486,10 @@
                                    oninput="document.getElementById('confidence-value').textContent = this.value">
                         </div>
 
+                        <button type="button" class="validation-button-secondary" onclick="prefillManualValidationFields(document.getElementById('incident-select').value)" title="Fills Situation + RCA with starter text for the selected incident (edit freely)">📝 Insert sample text</button>
+                        <button type="button" class="validation-button-secondary" onclick="guidedFillNextStep()" title="Fills Situation, RCA, and confidence from an in-page script (no LLM). Advance one line per click.">🧭 Guided: fill next step</button>
+                        <button type="button" class="validation-button-secondary" onclick="guidedFillAndExecuteStep()" title="Applies the next guided line, then posts the same step as Execute Step.">⚡ Guided: fill + execute</button>
+                        <p style="font-size: 0.8em; color: #64748b; margin: 0 0 10px;">Guided text is <strong>hardcoded</strong> in this page for repeatable demos. Use <strong>Start Test</strong>, then <strong>Guided: fill + execute</strong> until the episode completes (or continue manually anytime).</p>
                         <button class="validation-button" onclick="startValidationTest()">▶️ Start Test</button>
                         <button class="validation-button" style="background: #8b5cf6; margin-top: 10px;" onclick="executeValidationStep()">➡️ Execute Step</button>
                     </div>
@@ -522,8 +544,186 @@
     <script>
         let rewardChart = null;
         let validationSessionId = null;
+        let manualValidationIncidentId = null;
+        let manualGuidedStepIndex = 0;
+        let validationStepCount = 0;
+        let validationRunbookIndex = 0;
+        let validationNotificationSent = false;
+        const validationRunbookSequence = [
+            'rb_heap_profile',
+            'rb_check_cache_config',
+            'rb_set_cache_eviction',
+            'rb_controlled_restart'
+        ];
 
-        function switchTab(tabName) {
+        /** Starter copy for manual validation (detection-phase defaults; user edits per step). */
+        const MANUAL_VALIDATION_PREFILL = {
+            INC001: {
+                situation: 'Checkout and payment APIs timing out; elevated p99 latency on payment-service; customer-facing errors spiking.',
+                hypothesis: 'Payment service overload or downstream dependency latency (timeouts not yet isolated to a single hop).'
+            },
+            INC002: {
+                situation: 'Application errors referencing connection pool exhaustion; DB active connections near max; intermittent 503s.',
+                hypothesis: 'Database connection pool mis-sized or connection leaks causing pool starvation under load.'
+            },
+            INC003: {
+                situation: 'Recommendation-service memory >95%, GC pauses elevated, latency spiking; need blast-radius check vs other services.',
+                hypothesis: 'Memory pressure from recent deploy or model/cache change on recommendation-service (possible unbounded cache growth).'
+            },
+            INC004: {
+                situation: 'External vendor API returning intermittent failures; client retries may be masking true error rate and amplifying load.',
+                hypothesis: 'Third-party dependency degradation combined with aggressive retry policy causing thundering herd / masked failures.'
+            },
+            INC005: {
+                situation: 'Post-deploy spike in errors; config drift suspected between regions or environments; conflicting telemetry signals.',
+                hypothesis: 'Bad configuration rollout or partial apply causing inconsistent runtime behavior across instances.'
+            },
+            INC006: {
+                situation: 'Multi-region user impact; CDN/routing anomalies reported; correlated latency across edge and origin paths.',
+                hypothesis: 'Global routing or CDN misconfiguration causing traffic to hit wrong origins or unhealthy shards.'
+            },
+            INC007: {
+                situation: 'Widespread critical alerts across multiple services and regions; executive comms requested; incident commander coordinating specialists.',
+                hypothesis: 'Cascading failure with multiple contributing factors; initial focus on stabilizing blast radius and identifying primary trigger.'
+            }
+        };
+
+        function prefillManualValidationFields(incidentId) {
+            const pack = MANUAL_VALIDATION_PREFILL[incidentId] || MANUAL_VALIDATION_PREFILL.INC003;
+            document.getElementById('situation-input').value = pack.situation;
+            document.getElementById('hypothesis-input').value = pack.hypothesis;
+        }
+
+        function setConfidenceUI(value) {
+            const slider = document.getElementById('confidence-slider');
+            const v = Math.max(0, Math.min(1, Number(value)));
+            const rounded = Math.round(v * 10) / 10;
+            slider.value = String(rounded);
+            document.getElementById('confidence-value').textContent = String(rounded);
+        }
+
+        /** Curated guided lines (situation, RCA, confidence). No backend / no LLM — safe for demos. */
+        const GUIDED_INC003 = [
+            { situation: 'Recommendation-service memory >95%, GC pauses elevated, p99 latency spiking; checking blast radius vs adjacent services.', hypothesis: 'Suspect memory regression on recommendation-service tied to recent deploy or model/cache change.', confidence: 0 },
+            { situation: 'L2 sweep shows recommendation-service as dominant; other alerts look correlated but weaker; deploy history shows a recent version bump.', hypothesis: 'Narrowing to unbounded or misconfigured in-process cache after model update.', confidence: 0.2 },
+            { situation: 'Heap-oriented signals worsening; preparing deeper evidence collection and customer comms cadence.', hypothesis: 'Likely cache growth / missing eviction rather than pure traffic spike.', confidence: 0.35 },
+            { situation: 'Evidence gathering in flight: profiling and cache configuration checks to confirm allocator behavior.', hypothesis: 'Feature cache or tensor-adjacent buffers growing without bound.', confidence: 0.45 },
+            { situation: 'Mitigation path selected: enforce bounded cache with eviction and plan controlled restart to apply safely.', hypothesis: 'Confirmed misconfiguration class issue; remediation should stabilize heap.', confidence: 0.65 },
+            { situation: 'Executing controlled restart while monitoring heap, GC, and error budget recovery per wave.', hypothesis: 'Expect recovery after eviction policy + restart; watch for regressions.', confidence: 0.8 },
+            { situation: 'Post-change metrics trending stable; customer-visible latency returning toward baseline.', hypothesis: 'Primary chain validated; secondary factors deprioritized.', confidence: 0.9 },
+            { situation: 'SLOs recovered; no new criticals in observation window; preparing final customer and stakeholder updates.', hypothesis: 'Incident resolved after cache remediation and controlled rollout.', confidence: 1.0 },
+            { situation: 'Extended monitoring window: heap and latency remain within healthy envelopes across shards.', hypothesis: 'No regression after remediation; sustained stability.', confidence: 0.95 },
+            { situation: 'Customer comms closed with resolution summary; internal timeline captured for postmortem.', hypothesis: 'Closure criteria met for executive reporting.', confidence: 0.95 },
+            { situation: 'Runbook outcomes verified against metrics; tagging services for follow-up hardening work.', hypothesis: 'Preventive backlog created; incident operationally complete.', confidence: 0.95 },
+            { situation: 'Final sweep of alerts and dashboards; on-call handoff notes updated.', hypothesis: 'No residual hotspots; safe to demobilise response.', confidence: 0.95 },
+            { situation: 'Post-incident review scheduled; action items owned (cache guardrails, deploy checks).', hypothesis: 'Formal learning loop engaged beyond immediate mitigation.', confidence: 0.95 },
+            { situation: 'Episode wrap: systems nominal; monitoring escalations cleared.', hypothesis: 'Manual validation narrative aligned with stable production state.', confidence: 1.0 }
+        ];
+
+        const GUIDED_INC001 = [
+            { situation: 'Checkout errors rising; payment API p99 latency elevated; timeouts concentrated on payment-service path.', hypothesis: 'Suspect payment-service overload or downstream dependency latency.', confidence: 0 },
+            { situation: 'Auth and fraud checks healthy; acquiring path noisy; correlating with traffic spike and dependency dashboards.', hypothesis: 'Likely dependency timeout amplification rather than pure app CPU.', confidence: 0.2 },
+            { situation: 'Retry budgets reviewed; evidence of thundering herd on a downstream connector during peak.', hypothesis: 'Retry policy + dependency saturation creating timeout storms.', confidence: 0.4 },
+            { situation: 'Mitigation: throttle non-critical clients, increase timeouts where safe, scale payment adapters.', hypothesis: 'Buy time while dependency recovers; reduce retry pressure.', confidence: 0.6 },
+            { situation: 'Error rates declining; latency recovering; monitoring for partial dependency brownouts.', hypothesis: 'Stabilization holds; continue cautious rollout of traffic.', confidence: 0.8 },
+            { situation: 'Customer impact reduced; payments succeeding at baseline rates; incident ready to close.', hypothesis: 'Primary cause addressed via traffic and dependency controls.', confidence: 0.95 },
+            { situation: 'Extended soak: payment success rate stable; no timeout recurrence in peak window.', hypothesis: 'Sustained recovery; residual risk tracked as low.', confidence: 0.95 },
+            { situation: 'Stakeholder summary published; on-call rotation normalized.', hypothesis: 'Operational closure complete.', confidence: 0.95 },
+            { situation: 'Monitoring dashboards green; incident record marked resolved.', hypothesis: 'End state verified for manual validation.', confidence: 1.0 }
+        ];
+
+        const GUIDED_INC002 = [
+            { situation: '503s and pool-exhaustion errors; DB active connections pegged near max; app logs show acquisition timeouts.', hypothesis: 'Suspect pool sizing, leaks, or slow queries holding connections.', confidence: 0 },
+            { situation: 'Top queries identified; several sessions long-held; traffic normal but DB wait time high.', hypothesis: 'Likely slow query + missing index or lock contention, not pure overload.', confidence: 0.25 },
+            { situation: 'Mitigation: kill long-running sessions, scale read replicas, temporarily raise pool cautiously.', hypothesis: 'Containment should restore availability while root query is fixed.', confidence: 0.5 },
+            { situation: 'DB healthy markers returning; app error budget recovering; validating no leak in app connection handling.', hypothesis: 'If stable, root was query/session pattern plus insufficient pool headroom.', confidence: 0.75 },
+            { situation: 'Sustained stability post-change; documenting preventive index/query work.', hypothesis: 'Resolved after DB-side remediation and app pool hygiene.', confidence: 0.95 },
+            { situation: 'Soak test complete; connection acquisition latency normal; no pool starvation.', hypothesis: 'DB layer stable under expected QPS.', confidence: 0.95 },
+            { situation: 'Engineering tasks filed for query tuning and pool sizing review.', hypothesis: 'Preventive work captured; incident demobilised.', confidence: 0.95 },
+            { situation: 'Final health check passed; incident closed from commander view.', hypothesis: 'Manual validation reached steady-state narrative.', confidence: 1.0 }
+        ];
+
+        const GUIDED_INC004 = [
+            { situation: 'Vendor API elevated 5xx/timeout rate; client retries increasing; user-visible failures intermittent.', hypothesis: 'Third-party outage or rate limit plus aggressive client retries.', confidence: 0 },
+            { situation: 'Backoff and circuit-breaker posture reviewed; dependency SLO breached for sustained window.', hypothesis: 'Retry amplification masking true failure rate; need fail-fast paths.', confidence: 0.3 },
+            { situation: 'Mitigation: degrade gracefully, enable cached responses where allowed, shift traffic to alternate vendor path.', hypothesis: 'Reduce load on bad dependency while preserving core flows.', confidence: 0.55 },
+            { situation: 'Vendor health improving; error budget recovering; validating no client-side stampede remains.', hypothesis: 'Incident contained via backoff + alternate path.', confidence: 0.8 },
+            { situation: 'Stable baseline restored; postmortem items captured for retry budgets and fallbacks.', hypothesis: 'Closed after dependency recovery and client hardening.', confidence: 0.95 },
+            { situation: 'Vendor SLO green for sustained interval; synthetic probes passing.', hypothesis: 'Third-party risk back to normal operating envelope.', confidence: 0.95 },
+            { situation: 'Runbooks updated with new breaker thresholds; on-call briefed.', hypothesis: 'Operational learning applied.', confidence: 0.95 },
+            { situation: 'Incident commander sign-off; manual validation episode can end.', hypothesis: 'No further user-visible degradation.', confidence: 1.0 }
+        ];
+
+        const GUIDED_INC005 = [
+            { situation: 'Post-deploy error spike; inconsistent behavior across instances; signals conflict between regions.', hypothesis: 'Suspect partial config rollout or wrong feature flag matrix.', confidence: 0 },
+            { situation: 'Diff shows unintended default change; canary cohorts diverging from control.', hypothesis: 'Bad config merge or environment-specific override.', confidence: 0.35 },
+            { situation: 'Mitigation: rollback config to last-known-good; freeze further deploys until parity verified.', hypothesis: 'Rollback should normalize error profile quickly.', confidence: 0.6 },
+            { situation: 'Metrics normalized after rollback; verifying parity across regions and instance pools.', hypothesis: 'Confirmed config drift as primary trigger.', confidence: 0.85 },
+            { situation: 'Incident resolved; guardrails added for config promotion and canary gates.', hypothesis: 'Closed with preventive controls on rollout.', confidence: 0.95 },
+            { situation: 'Canary replay successful; parity checks clean across shards.', hypothesis: 'Config risk controlled going forward.', confidence: 0.95 },
+            { situation: 'Final monitoring pass: error rates nominal; closing comms.', hypothesis: 'Episode complete from validation perspective.', confidence: 1.0 }
+        ];
+
+        const GUIDED_INC006 = [
+            { situation: 'Multi-region latency and error increases; CDN and edge anomalies reported alongside origin pressure.', hypothesis: 'Suspect global routing or CDN misrouting amplifying origin load.', confidence: 0 },
+            { situation: 'Traffic steering analysis shows subset of POPs unhealthy; origins unevenly loaded.', hypothesis: 'Edge health + routing weights inconsistent with control plane intent.', confidence: 0.25 },
+            { situation: 'Mitigation: shift steering to healthy POPs, shed load, protect origin with throttles.', hypothesis: 'Stabilize blast radius before deeper root isolation.', confidence: 0.5 },
+            { situation: 'Origin recovery trending; edge error budget improving; validating no cross-region stampede.', hypothesis: 'Primary trigger in routing layer; secondary origin saturation fading.', confidence: 0.75 },
+            { situation: 'Global SLOs back within targets; documenting routing fixes and monitoring gaps.', hypothesis: 'Resolved after steering and capacity actions.', confidence: 0.95 },
+            { situation: 'Cross-region probes healthy; no residual hot-sharding detected.', hypothesis: 'Traffic distribution normalized.', confidence: 0.95 },
+            { situation: 'Executive summary + action items owned; war room demobilised.', hypothesis: 'Formal closure path satisfied.', confidence: 1.0 }
+        ];
+
+        const GUIDED_INC007 = [
+            { situation: 'Widespread criticals across regions; multiple customer journeys impacted; incident command activated.', hypothesis: 'Cascading failure; unknown primary trigger—treat as multi-factor until isolated.', confidence: 0 },
+            { situation: 'Time-aligned changes reviewed; partial deploys and integration contracts flagged as high-risk.', hypothesis: 'Suspect coordinated trigger: infra change plus dependency fragility.', confidence: 0.15 },
+            { situation: 'Specialist findings diverge; forcing explicit competing hypotheses and evidence matrix.', hypothesis: 'Need coalition consensus to avoid thrash across teams.', confidence: 0.3 },
+            { situation: 'Coalition vote: leading chain is control-plane/schema drift causing downstream incompatibility and retry pressure.', hypothesis: 'Consensus hypothesis selected for coordinated mitigation.', confidence: 0.45 },
+            { situation: 'Executing safest global mitigations: rollback, feature flags, throttles, and targeted reroutes.', hypothesis: 'Contain first, prove recovery, then deepen root isolation.', confidence: 0.6 },
+            { situation: 'Recovery trending globally; secondary oscillations monitored; comms cadence maintained.', hypothesis: 'Mitigation effective; continue hardening until steady state.', confidence: 0.75 },
+            { situation: 'SLOs restored; executive summary drafted; prevention backlog captured.', hypothesis: 'Incident resolved with documented primary and contributing factors.', confidence: 0.9 },
+            { situation: 'Postmortem ownership assigned; guardrails scheduled; closing incident record.', hypothesis: 'Formal closure after sustained stability window.', confidence: 0.95 },
+            { situation: 'Global dashboards green; no new sev-1 pages during soak interval.', hypothesis: 'Cascading risk contained and verified.', confidence: 0.95 },
+            { situation: 'Final commander review: customer impact ended; follow-ups tracked.', hypothesis: 'Manual validation narrative complete.', confidence: 1.0 }
+        ];
+
+        const GUIDED_MANUAL_SEQUENCES = {
+            INC001: GUIDED_INC001,
+            INC002: GUIDED_INC002,
+            INC003: GUIDED_INC003,
+            INC004: GUIDED_INC004,
+            INC005: GUIDED_INC005,
+            INC006: GUIDED_INC006,
+            INC007: GUIDED_INC007
+        };
+
+        function guidedFillNextStep() {
+            if (!validationSessionId) {
+                alert('Start a test first');
+                return false;
+            }
+            const incidentId = document.getElementById('incident-select').value;
+            const seq = GUIDED_MANUAL_SEQUENCES[incidentId] || GUIDED_INC003;
+            if (manualGuidedStepIndex >= seq.length) {
+                alert('End of guided sequence for this incident. Use freeform text, Insert sample text, or Start Test again.');
+                return false;
+            }
+            const row = seq[manualGuidedStepIndex];
+            manualGuidedStepIndex += 1;
+            document.getElementById('situation-input').value = row.situation;
+            document.getElementById('hypothesis-input').value = row.hypothesis;
+            setConfidenceUI(row.confidence);
+            return true;
+        }
+
+        async function guidedFillAndExecuteStep() {
+            if (!guidedFillNextStep()) {
+                return;
+            }
+            await executeValidationStep();
+        }
+
+        function switchTab(tabName, event) {
             // Hide all tabs
             document.getElementById('training').classList.remove('active');
             document.getElementById('validation').classList.remove('active');
@@ -535,11 +735,15 @@
             document.getElementById(tabName).classList.add('active');
 
             // Mark button as active
-            event.target.classList.add('active');
+            if (event && event.target) {
+                event.target.classList.add('active');
+            }
         }
 
         async function startValidationTest() {
             const incident = document.getElementById('incident-select').value;
+            manualGuidedStepIndex = 0;
+            prefillManualValidationFields(incident);
             try {
                 const response = await fetch('/reset', {
                     method: 'POST',
@@ -548,21 +752,120 @@
                 });
                 const data = await response.json();
                 validationSessionId = data.session_id;
+                manualValidationIncidentId = incident;
+                validationStepCount = 0;
+                validationRunbookIndex = 0;
+                validationNotificationSent = false;
 
                 document.getElementById('validation-placeholder').style.display = 'none';
                 document.getElementById('validation-results').style.display = 'block';
 
+                const initialObservation = data.observation || {};
                 updateValidationResults({
                     status: 'Running',
                     session_id: validationSessionId,
-                    phase: data.phase,
-                    step: data.step,
+                    phase: initialObservation.phase || 'detection',
+                    step: initialObservation.step || 0,
                     reward: 0.0,
                     done: false
                 });
             } catch (e) {
                 alert('Error: ' + e.message);
             }
+        }
+
+        function buildValidationAction(currentPhase, situation, hypothesis, confidence) {
+            const phase = (currentPhase || 'detection').toLowerCase();
+            validationStepCount += 1;
+
+            let l2Directive = {
+                action: 'check_all_alerts',
+                parameters: {},
+                reasoning: 'Collect all critical alerts for broad visibility'
+            };
+
+            let sreDirective = {
+                action: 'list_runbooks',
+                parameters: {},
+                reasoning: 'Discover available mitigation playbooks'
+            };
+
+            let pmDirective = {
+                action: 'check_sla_status',
+                parameters: {},
+                reasoning: 'Track customer/SLA impact'
+            };
+
+            let coalitionVote = null;
+            let escalationRequired = false;
+
+            if (phase === 'triage' || phase === 'investigation') {
+                l2Directive = {
+                    action: 'check_deploy_history',
+                    parameters: { service: 'recommendation-service' },
+                    reasoning: 'Correlate incident with recent deploy changes'
+                };
+            }
+
+            if (phase === 'investigation' || phase === 'mitigation' || phase === 'resolution') {
+                const stepId = validationRunbookSequence[Math.min(validationRunbookIndex, validationRunbookSequence.length - 1)];
+                sreDirective = {
+                    action: 'execute_runbook_step',
+                    parameters: { step_id: stepId },
+                    reasoning: `Execute phase-appropriate mitigation step: ${stepId}`
+                };
+                if (validationRunbookIndex < validationRunbookSequence.length - 1) {
+                    validationRunbookIndex += 1;
+                }
+            }
+
+            if (phase === 'mitigation' || phase === 'resolution') {
+                pmDirective = {
+                    action: 'track_revenue_impact',
+                    parameters: {},
+                    reasoning: 'Track business impact during mitigation/resolution'
+                };
+            }
+
+            if (phase === 'detection' && validationStepCount === 1) {
+                escalationRequired = true;
+            }
+
+            if ((phase === 'investigation' || phase === 'mitigation') && validationStepCount >= 3) {
+                coalitionVote = hypothesis;
+            }
+
+            let l1Directive;
+            if (!validationNotificationSent) {
+                l1Directive = {
+                    action: 'send_notification',
+                    parameters: {
+                        customers: 'affected_customers',
+                        message: 'We are actively investigating this incident and will share updates shortly.',
+                        severity: 'high'
+                    },
+                    reasoning: 'Send proactive customer communication'
+                };
+                validationNotificationSent = true;
+            } else {
+                l1Directive = {
+                    action: 'check_customer_reports',
+                    parameters: {},
+                    reasoning: 'Monitor customer impact after communication'
+                };
+            }
+
+            return {
+                situation_assessment: situation,
+                hypothesis: hypothesis,
+                coalition_vote: coalitionVote,
+                resolution_confidence: confidence,
+                l1_directive: l1Directive,
+                l2_directive: l2Directive,
+                sre_directive: sreDirective,
+                pm_directive: pmDirective,
+                escalation_required: escalationRequired
+            };
         }
 
         async function executeValidationStep() {
@@ -574,18 +877,9 @@
             const situation = document.getElementById('situation-input').value;
             const hypothesis = document.getElementById('hypothesis-input').value;
             const confidence = parseFloat(document.getElementById('confidence-slider').value);
+            const currentPhase = document.getElementById('result-phase').textContent || 'detection';
 
-            const action = {
-                situation_assessment: situation,
-                hypothesis: hypothesis,
-                resolution_confidence: confidence,
-                l1_action: { action: 'send_notification', parameters: {}, reasoning: '' },
-                l2_action: { action: 'query_logs', parameters: {}, reasoning: '' },
-                sre_action: { action: 'list_runbooks', parameters: {}, reasoning: '' },
-                pm_action: { action: 'get_sla_status', parameters: {}, reasoning: '' },
-                severity_assessment: 'p2',
-                escalation_required: false
-            };
+            const action = buildValidationAction(currentPhase, situation, hypothesis, confidence);
 
             try {
                 const response = await fetch(`/step/${validationSessionId}`, {
@@ -605,6 +899,9 @@
                 });
 
                 if (data.done) {
+                    validationSessionId = null;
+                    manualValidationIncidentId = null;
+                    manualGuidedStepIndex = 0;
                     alert('Episode Complete! Reward: ' + data.reward.toFixed(4));
                 }
             } catch (e) {
@@ -626,10 +923,14 @@
                 const response = await fetch('/metrics');
                 const data = await response.json();
 
-                document.getElementById('episodes-count').textContent = data.total_episodes || 0;
+                document.getElementById('episodes-count').textContent = data.total_episodes || data.episode_count || 0;
                 document.getElementById('avg-reward').textContent = (data.avg_reward || 0).toFixed(3);
                 document.getElementById('best-reward').textContent = (data.best_reward || 0).toFixed(3);
-                document.getElementById('improvement').textContent = data.improvement || '0%';
+                const improvementText = (
+                    data.improvement ||
+                    (typeof data.improvement_pct === 'number' ? `${data.improvement_pct.toFixed(1)}%` : '0.0%')
+                );
+                document.getElementById('improvement').textContent = improvementText;
 
                 return data;
             } catch (e) {
@@ -640,26 +941,30 @@
 
         async function fetchEpisodes() {
             try {
-                const response = await fetch('/episodes');
+                const response = await fetch('/history');
                 const data = await response.json();
+                const episodes = data.history || [];
 
-                let html = '<div class="episode-row" style="background: #334155; font-weight: 600;"><div>Episode</div><div>Incident</div><div>Reward</div><div>Status</div></div>';
-
-                if (data.episodes && data.episodes.length > 0) {
-                    for (let i = 0; i < Math.min(10, data.episodes.length); i++) {
-                        const ep = data.episodes[i];
-                        const status = ep.done ? '<span class="status-badge status-done">Done</span>' : '<span class="status-badge status-running">Running</span>';
+                let html = '';
+                if (episodes.length === 0) {
+                    html = `
+                        <div class="episode-row">
+                            <div colspan="4" style="text-align: center; color: #64748b;">No completed episodes yet</div>
+                        </div>
+                    `;
+                } else {
+                    for (let i = 0; i < Math.min(10, episodes.length); i++) {
+                        const ep = episodes[i];
                         html += `
                             <div class="episode-row">
-                                <div>#${ep.episode || i + 1}</div>
-                                <div>${ep.incident || 'INC003'}</div>
-                                <div><strong>${(ep.reward || 0).toFixed(4)}</strong></div>
-                                <div>${status}</div>
+                                <div>#${i + 1}</div>
+                                <div>${ep.incident_id || ep.incident || 'INC003'}</div>
+                                <div><strong>${Number(ep.reward || 0).toFixed(4)}</strong></div>
+                                <div><span class="status-badge status-done">Done</span></div>
                             </div>
                         `;
                     }
                 }
-
                 document.getElementById('episodes-list').innerHTML = html;
             } catch (e) {
                 console.error('Error fetching episodes:', e);
@@ -669,11 +974,9 @@
         async function fetchLearningCurve() {
             try {
                 const response = await fetch('/learning-curve');
-                const data = response.json();
-
-                const episodes = data.episodes || [];
-                const rewards = episodes.map(e => e.reward || 0);
-                const labels = episodes.map((e, i) => `Ep ${i + 1}`);
+                const data = await response.json();
+                const rewards = data.rewards || [];
+                const labels = rewards.map((_, i) => `Ep ${i + 1}`);
 
                 // Calculate rolling average (5-episode window)
                 const rolling = [];
@@ -716,7 +1019,7 @@
                             },
                             {
                                 label: 'Baseline (Untrained)',
-                                data: Array(rewards.length).fill(rewards.length > 0 ? rewards[0] : 0.28),
+                                data: Array(rewards.length).fill(data.baseline || 0.265),
                                 borderColor: '#ef4444',
                                 borderDash: [5, 5],
                                 borderWidth: 2,
@@ -828,6 +1131,19 @@
 
         // Initialize on load
         window.addEventListener('load', () => {
+            const incidentSelect = document.getElementById('incident-select');
+            prefillManualValidationFields(incidentSelect.value);
+            incidentSelect.addEventListener('change', () => {
+                if (validationSessionId && manualValidationIncidentId) {
+                    if (incidentSelect.value !== manualValidationIncidentId) {
+                        alert('A manual test is in progress for the selected incident. Finish the episode (or refresh the page) before switching incidents.');
+                        incidentSelect.value = manualValidationIncidentId;
+                    }
+                    return;
+                }
+                prefillManualValidationFields(incidentSelect.value);
+            });
+
             fetchMetrics();
             fetchEpisodes();
             fetchLearningCurve();

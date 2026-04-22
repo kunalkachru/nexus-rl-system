@@ -12,10 +12,10 @@ class TestHealthEndpoint:
         resp = client.get("/health")
         assert resp.status_code == 200
 
-    def test_health_has_status_ok(self):
+    def test_health_has_openenv_status(self):
         resp = client.get("/health")
         data = resp.json()
-        assert data["status"] == "ok"
+        assert data["status"] == "healthy"
 
     def test_health_has_version(self):
         resp = client.get("/health")
@@ -24,6 +24,31 @@ class TestHealthEndpoint:
     def test_health_tracks_active_sessions(self):
         resp = client.get("/health")
         assert "active_sessions" in resp.json()
+
+
+class TestOpenEnvContractStubs:
+    def test_metadata_endpoint(self):
+        resp = client.get("/metadata")
+        assert resp.status_code == 200
+        data = resp.json()
+        assert "name" in data and "description" in data
+
+    def test_schema_endpoint(self):
+        resp = client.get("/schema")
+        assert resp.status_code == 200
+        data = resp.json()
+        assert "action" in data and "observation" in data and "state" in data
+
+    def test_state_root_stub(self):
+        resp = client.get("/state")
+        assert resp.status_code == 200
+        assert "message" in resp.json()
+
+    def test_mcp_stub_jsonrpc(self):
+        resp = client.post("/mcp", json={"jsonrpc": "2.0", "id": 1, "method": "ping"})
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data.get("jsonrpc") == "2.0"
 
 
 class TestResetEndpoint:
@@ -201,6 +226,18 @@ class TestMetricsEndpoint:
     def test_metrics_has_episode_count(self):
         resp = client.get("/metrics")
         assert "episode_count" in resp.json()
+
+
+class TestDemoEndpoint:
+    def test_demo_inc003_completes(self):
+        resp = client.post("/demo/run/INC003")
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["incident_id"] == "INC003"
+        assert "transcript" in data and len(data["transcript"]) >= 2
+        assert data.get("done") is True
+        assert data.get("demo_completed") is True
+        assert data.get("reward_breakdown") is not None
 
 
 class TestFullEpisodeFlow:

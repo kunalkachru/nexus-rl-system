@@ -102,7 +102,7 @@ class NexusClient:
         while time.time() < deadline:
             try:
                 resp = self.health()
-                if resp.get("status") == "ok":
+                if resp.get("status") in ("ok", "healthy"):
                     return True
             except requests.exceptions.ConnectionError:
                 pass

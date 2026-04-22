@@ -1,0 +1,57 @@
+# Hugging Face Hub / Spaces: exclude paths from uploads where tooling respects this file.
+# Official `upload_folder()` primarily honors root `.gitignore`; this file documents
+# Hub-oriented exclusions and mirrors `.dockerignore` so Docker builds and Hub syncs stay aligned.
+#
+# If your client only reads `.gitignore`, rely on the expanded `.gitignore` in this repo;
+# Docker always reads `.dockerignore` for `COPY .` during Space builds.
+
+.git
+.github
+
+__pycache__
+**/__pycache__
+*.py[cod]
+*$py.class
+.pytest_cache
+.mypy_cache
+.ruff_cache
+.venv
+venv
+.env
+.env.*
+*.egg-info
+.eggs
+dist
+build
+
+tests
+test_*.py
+test_local_deployment.sh
+test_api_complete.sh
+test_hf_space_deployment.py
+test_regression_local.py
+gate.sh
+
+notebooks
+training
+train.py
+training_simulator.py
+scripts
+
+deploy_to_hf_spaces.py
+docker-compose.yml
+
+*.png
+episode_rewards.json
+training_artifacts
+grpo_checkpoints
+wandb
+
+*.md
+**/*.md
+!README.md
+
+gradio_app_backup.py
+gradio_app_minimal.py
+streamlit_app.py
+router.py

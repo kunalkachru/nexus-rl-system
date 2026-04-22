@@ -4,7 +4,7 @@
 
 - [x] **OpenEnv v0.2.3** — Validated via `openenv validate`
 - [x] **Training Script (GRPO in Colab)** — `notebooks/grpo_colab_v2.ipynb` (HF TRL + Unsloth)
-- [x] **HF Blog Post OR YouTube Video** — Blog post written and ready at `blog_post_final.md`
+- [x] **HF Blog Post OR YouTube Video** — Blog post written and ready at [`../blog/blog_post_final.md`](../blog/blog_post_final.md)
 
 ---
 
@@ -21,9 +21,9 @@
 
 ## ✅ PRESENTATION MATERIALS
 
-- [x] **3-Minute Pitch** — `PITCH_3MIN.md` (covers all 6 components + storytelling)
-- [x] **Demo Walkthrough** — `DEMO_WALKTHROUGH.md` (live API + dashboard walkthrough)
-- [x] **Blog Post** — `blog_post_final.md` (published to HF Spaces)
+- [x] **3-Minute Pitch** — [`../pitch/PITCH_3MIN.md`](../pitch/PITCH_3MIN.md) (covers all 6 components + storytelling)
+- [x] **Demo Walkthrough** — [`../pitch/DEMO_WALKTHROUGH.md`](../pitch/DEMO_WALKTHROUGH.md) (live API + dashboard walkthrough)
+- [x] **Blog Post** — [`../blog/blog_post_final.md`](../blog/blog_post_final.md) (published to HF Spaces)
 - [x] **Key Soundbites** — Prepared answers for likely Q&A
 
 ---
@@ -92,7 +92,7 @@ curl https://kunalkachru23-nexus-enhanced.hf.space/learning-curve
   ```
 - [ ] Have the notebook ready to open (grpo_colab_v2.ipynb)
 - [ ] Have the blog post link ready: [HF Blog URL - will be set when published]
-- [ ] Print the PITCH_3MIN.md and DEMO_WALKTHROUGH.md (as backup reference)
+- [ ] Print [`../pitch/PITCH_3MIN.md`](../pitch/PITCH_3MIN.md) and [`../pitch/DEMO_WALKTHROUGH.md`](../pitch/DEMO_WALKTHROUGH.md) (as backup reference)
 
 ---
 
@@ -100,9 +100,9 @@ curl https://kunalkachru23-nexus-enhanced.hf.space/learning-curve
 
 **5 minutes total:**
 - **0:00–0:15** — Opening: CrowdStrike context + problem statement
-- **0:15–2:00** — Main pitch: cover all 6 components (see PITCH_3MIN.md)
+- **0:15–2:00** — Main pitch: cover all 6 components (see [`../pitch/PITCH_3MIN.md`](../pitch/PITCH_3MIN.md))
 - **2:00–3:00** — Closing + call to action
-- **3:00–5:00** — Q&A (use DEMO_WALKTHROUGH.md as guide)
+- **3:00–5:00** — Q&A (use [`../pitch/DEMO_WALKTHROUGH.md`](../pitch/DEMO_WALKTHROUGH.md) as guide)
 
 **If judges ask to see code:**
 - Show `server/environment.py` (6-phase state machine)

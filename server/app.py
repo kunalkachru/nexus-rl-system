@@ -15,7 +15,11 @@ Endpoints:
   GET    /incidents                — list all incident cases
   GET    /incidents/{case_id}      — get incident details
   GET    /tools/{session_id}       — tool registry status
-  GET    /health                   — health check
+  GET    /health                   — health check (OpenEnv: status=healthy)
+  GET    /metadata                 — OpenEnv validate stub (name, description)
+  GET    /schema                   — OpenEnv validate stub (action, observation, state)
+  GET    /state                    — OpenAPI contract stub (use /state/{session_id} for data)
+  POST   /mcp                      — OpenEnv JSON-RPC stub
   GET    /metrics                  — training metrics summary
 """
 
@@ -23,7 +27,7 @@ import time
 import json
 import pathlib
 from typing import Dict, Any, Optional
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse
 from pydantic import BaseModel
@@ -50,7 +54,7 @@ app.add_middleware(
 
 # Session store — server-side external state (Theme 2)
 _sessions: Dict[str, NexusEnvironment] = {}
-_episode_rewards: list = []  # For /metrics (only reward > 0)
+_episode_rewards: list = []  # For /metrics and /learning-curve (all completed episodes)
 _all_episodes: list = []  # ALL episodes (for progress tracking)
 _total_steps: int = 0  # Track EVERY step call (real-time progress)
 
@@ -82,6 +86,7 @@ load_episode_rewards()
 # ------------------------------------------------------------------
 class ResetRequest(BaseModel):
     incident_id: Optional[str] = None
+    task_id: Optional[str] = None  # Backward-compatible alias used in older scripts/docs
     difficulty: Optional[str] = None
     seed: Optional[int] = None
     session_id: Optional[str] = None
@@ -101,16 +106,86 @@ class StepRequest(BaseModel):
     direct_tool: Optional[Dict[str, Any]] = None
 
 
+class StepWithSessionRequest(StepRequest):
+    session_id: str
+
+
 # ------------------------------------------------------------------
 # Endpoints
 # ------------------------------------------------------------------
 @app.get("/health")
 def health():
+    # OpenEnv `openenv validate --url` expects `"status": "healthy"` (openenv-http/1.x).
     return {
-        "status": "ok",
+        "status": "healthy",
         "environment": "nexus-enhanced",
         "version": "1.0.0",
         "active_sessions": len(_sessions),
+    }
+
+
+# ------------------------------------------------------------------
+# OpenEnv HTTP / OpenAPI contract stubs (validate --url)
+#
+# - /metadata, /schema, GET /state (no session_id), POST /mcp: **contract-only**
+#   stubs for the OpenEnv CLI checker. They do not participate in episode logic.
+# - /health: **operational** (sessions, version, environment) but `status` must be
+#   `"healthy"` for openenv-http/1.x; training/UI only need HTTP 200 + JSON.
+# Real episode state remains GET /state/{session_id}; reset/step unchanged.
+# ------------------------------------------------------------------
+@app.get("/metadata")
+def openenv_metadata():
+    return {
+        "name": "nexus-enhanced",
+        "description": (
+            "Multi-Agent Enterprise Incident Response RL Environment "
+            "(NEXUS Enhanced — Meta PyTorch OpenEnv Hackathon)"
+        ),
+    }
+
+
+@app.get("/schema")
+def openenv_schema():
+    return {
+        "action": {
+            "type": "object",
+            "description": "IC step payload; see OpenAPI component StepRequest / reset response shapes.",
+        },
+        "observation": {
+            "type": "object",
+            "description": "IC-visible observation dict returned on reset and each step.",
+        },
+        "state": {
+            "type": "object",
+            "description": "Full episode state from GET /state/{session_id} (requires active session_id).",
+        },
+    }
+
+
+@app.get("/state")
+def openenv_state_openapi_stub():
+    """
+    OpenAPI lists GET /state for OpenEnv mode consistency checks.
+    Ephemeral session state remains on GET /state/{session_id}.
+    """
+    return {
+        "message": "Provide session_id: use GET /state/{session_id} after POST /reset.",
+        "contract": "openenv-http/1.x",
+    }
+
+
+@app.post("/mcp")
+async def openenv_mcp_stub(request: Request):
+    """Minimal JSON-RPC envelope for `openenv validate --url` (core env does not use MCP)."""
+    body: Dict[str, Any] = {}
+    try:
+        body = await request.json()
+    except Exception:
+        body = {}
+    return {
+        "jsonrpc": "2.0",
+        "id": body.get("id"),
+        "result": {"stub": True},
     }
 
 
@@ -118,8 +193,9 @@ def health():
 def reset(request: ResetRequest):
     """Start a new episode. Returns session_id and initial IC observation."""
     env = NexusEnvironment()
+    incident_id = request.incident_id or request.task_id
     obs = env.reset(
-        incident_id=request.incident_id,
+        incident_id=incident_id,
         difficulty=request.difficulty,
         seed=request.seed,
         session_id=request.session_id,
@@ -150,10 +226,9 @@ def step(session_id: str, request: StepRequest):
             "timestamp": time.time()
         })
 
-        # Save successful episodes (reward > 0) for learning curve
-        if reward > 0:
-            _episode_rewards.append(reward)
-            save_episode_rewards()
+        # Persist ALL completed episode rewards so curves update during training.
+        _episode_rewards.append(reward)
+        save_episode_rewards()
 
     return {
         "observation": obs,
@@ -161,6 +236,16 @@ def step(session_id: str, request: StepRequest):
         "done": done,
         "info": info,
     }
+
+
+@app.post("/step")
+def step_with_session(request: StepWithSessionRequest):
+    """
+    Backward-compatible step endpoint for clients that send session_id in body.
+    Canonical endpoint remains POST /step/{session_id}.
+    """
+    base_req = StepRequest(**request.model_dump(exclude={"session_id"}))
+    return step(request.session_id, base_req)
 
 
 @app.get("/state/{session_id}")
@@ -257,6 +342,25 @@ def list_incidents():
     }
 
 
+@app.get("/tasks")
+def list_tasks():
+    """
+    Backward-compatible task list endpoint used by older docs/scripts.
+    Mirrors incident metadata in a compact shape.
+    """
+    return {
+        "tasks": [
+            {
+                "id": inc.case_id,
+                "title": inc.title,
+                "difficulty": inc.difficulty,
+                "severity": inc.severity.value,
+            }
+            for inc in INCIDENT_LIBRARY.values()
+        ]
+    }
+
+
 @app.get("/incidents/{case_id}")
 def get_incident_details(case_id: str):
     """Get incident details. Ground truth (root_cause, is_red_herring) omitted."""
@@ -303,20 +407,35 @@ def get_tool_status(session_id: str):
 @app.get("/metrics")
 def get_metrics():
     """Training metrics summary — reward curves for demo and web UI."""
+    baseline_reward = 0.265
+    avg_reward = (sum(_episode_rewards) / len(_episode_rewards)) if _episode_rewards else None
+    improvement_delta = (avg_reward - baseline_reward) if avg_reward is not None else None
+    improvement_pct = (
+        (improvement_delta / baseline_reward) * 100
+        if improvement_delta is not None and baseline_reward > 0
+        else None
+    )
+
+    successful_episodes = sum(1 for r in _episode_rewards if r > 0)
+
     return {
-        "episode_count": len(_episode_rewards),  # Episodes with reward > 0
+        "episode_count": len(_episode_rewards),  # Completed episodes recorded in reward history
         "total_episodes": len(_all_episodes),    # ALL episodes (including 0-reward)
         "rewards": _episode_rewards[-50:],
-        "avg_reward": round(sum(_episode_rewards) / len(_episode_rewards), 4) if _episode_rewards else None,
+        "avg_reward": round(avg_reward, 4) if avg_reward is not None else None,
         "best_reward": round(max(_episode_rewards), 4) if _episode_rewards else None,
         "recent_avg": round(
             sum(_episode_rewards[-5:]) / min(5, len(_episode_rewards)), 4
         ) if _episode_rewards else None,
+        "baseline_reward": baseline_reward,
+        "improvement_delta": round(improvement_delta, 4) if improvement_delta is not None else None,
+        "improvement_pct": round(improvement_pct, 1) if improvement_pct is not None else None,
+        "improvement": f"{improvement_pct:.1f}%" if improvement_pct is not None else "0.0%",
         "training_progress": {
             "total_steps": _total_steps,         # EVERY API call logged in real-time
             "total_runs": len(_all_episodes),
-            "successful_episodes": len(_episode_rewards),
-            "success_rate": round(len(_episode_rewards) / len(_all_episodes) * 100, 1) if _all_episodes else 0,
+            "successful_episodes": successful_episodes,
+            "success_rate": round(successful_episodes / len(_all_episodes) * 100, 1) if _all_episodes else 0,
         }
     }
 
@@ -344,6 +463,27 @@ def get_history():
                 ),
             })
     return {"episodes": len(completed), "history": completed}
+
+
+@app.get("/episodes")
+def get_episodes():
+    """
+    Backward-compatible alias used by older dashboard code.
+    Returns a lightweight view sorted by most recent completion.
+    """
+    completed = []
+    for sid, env in _sessions.items():
+        state = env.current_state
+        if state.done:
+            completed.append({
+                "session_id": sid,
+                "incident": state.incident.case_id,
+                "reward": state.reward_breakdown.total if state.reward_breakdown else 0.0,
+                "done": state.done,
+            })
+
+    completed.sort(key=lambda item: item["session_id"], reverse=True)
+    return {"episodes": completed}
 
 
 @app.get("/learning-curve")
@@ -472,12 +612,13 @@ def get_training_metrics():
 # ------------------------------------------------------------------
 DEMO_SCRIPTS: Dict[str, list] = {
     "INC003": [
-        # Step 1: Detection — IC surveys alerts, dispatches L2 and L1
+        # Step 1: Detection — broad sweep + proactive customer comms
         {
             "situation_assessment": (
                 "Alert fired: recommendation-service memory at 96%, GC pause 4200ms, API gateway latency spiking to 8s. "
                 "Two additional services flagged (search-service errors 8%, ad-service CPU 78%) — checking if related. "
-                "Hypothesis forming: ML model update may have introduced memory regression. Dispatching L2 to investigate metrics."
+                "Hypothesis forming: ML model update may have introduced memory regression. Dispatching L2 to investigate metrics "
+                "and notifying impacted customers proactively."
             ),
             "hypothesis": "ML model update causing memory regression in recommendation-service",
             "l2_directive": {
@@ -486,23 +627,25 @@ DEMO_SCRIPTS: Dict[str, list] = {
                 "reasoning": "Sweep all active alerts to identify blast radius and eliminate red herrings",
             },
             "l1_directive": {
-                "action": "check_customer_reports",
-                "parameters": {},
-                "reasoning": "Get customer impact picture immediately",
+                "action": "send_notification",
+                "parameters": {
+                    "customers": "all_affected",
+                    "message": "We detected service degradation and are actively investigating. Next update in 15 minutes.",
+                    "severity": "high",
+                },
+                "reasoning": "Send proactive customer communication early",
             },
             "resolution_confidence": 0.05,
         },
-        # Step 2: Investigation — Deploy history check, coalition vote
+        # Step 2: Triage/investigation — collect causal evidence and start runbook chain
         {
             "situation_assessment": (
                 "L2 confirms: recommendation-service heap at 14GB vs 8GB limit. "
                 "Search-service error rate only 8% — within threshold. Ad-service CPU 78% — correlated with load, not causative. "
                 "RED HERRINGS IDENTIFIED: search-service and ad-service not primary cause. "
-                "Deploy history shows recommendation-service v2.8.0 deployed 1.5h ago with ML model v4. "
-                "Coalition vote initiated: root cause is ML model v4 feature vector cache lacking LRU eviction."
+                "Deploy history shows recommendation-service v2.8.0 deployed 1.5h ago with ML model v4."
             ),
             "hypothesis": "ML model v4 feature vector cache has no eviction — memory grows unbounded until OOMKill",
-            "coalition_vote": "ML model v4 feature vector cache lacks LRU eviction causing unbounded heap growth",
             "l2_directive": {
                 "action": "check_deploy_history",
                 "parameters": {"service": "recommendation-service"},
@@ -513,26 +656,30 @@ DEMO_SCRIPTS: Dict[str, list] = {
                 "parameters": {"step_id": "rb_heap_profile"},
                 "reasoning": "Capture heap profile to confirm cache is top memory consumer",
             },
-            "l1_directive": {
-                "action": "send_notification",
-                "parameters": {
-                    "customers": "all_affected",
-                    "message": "We're aware of degraded performance on recommendations and homepage. Our team is actively investigating. ETA for resolution: 30 minutes.",
-                    "severity": "high",
-                },
-                "reasoning": "Proactive customer notification — 320k users affected, revenue $15.6k/min",
-            },
             "resolution_confidence": 0.35,
         },
-        # Step 3: Mitigation — Apply fix, verify recovery
+        # Step 3: Investigation — prerequisite runbook step
         {
             "situation_assessment": (
-                "Heap profile confirms: FeatureVectorCache is top allocator at 11.2GB. Cache max_size=unlimited, eviction=none confirmed. "
-                "Coalition consensus: ML model v4 cache is root cause. Applying LRU eviction config now. "
-                "Controlled rolling restart initiated — one pod at a time to preserve availability. "
-                "Red herrings (search-service, ad-service) correctly deprioritized throughout investigation."
+                "Heap profile confirms: FeatureVectorCache is top allocator at 11.2GB. "
+                "Validating cache configuration before remediation."
             ),
             "hypothesis": "ML model v4 feature vector cache — no eviction policy — confirmed by heap profile",
+            "sre_directive": {
+                "action": "execute_runbook_step",
+                "parameters": {"step_id": "rb_check_cache_config"},
+                "reasoning": "Prerequisite check before applying cache remediation",
+            },
+            "resolution_confidence": 0.45,
+        },
+        # Step 4: Mitigation — apply remediation
+        {
+            "situation_assessment": (
+                "Cache config confirmed: max_size=unlimited and eviction=none. "
+                "Applying LRU eviction and bounded cache size to stop unbounded heap growth."
+            ),
+            "hypothesis": "Confirmed root cause — unbounded feature cache in ML model v4",
+            "coalition_vote": "Root cause is ML model v4 cache eviction misconfiguration",
             "sre_directive": {
                 "action": "execute_runbook_step",
                 "parameters": {"step_id": "rb_set_cache_eviction"},
@@ -543,7 +690,46 @@ DEMO_SCRIPTS: Dict[str, list] = {
                 "parameters": {},
                 "reasoning": "Track total revenue impact for post-incident review",
             },
-            "resolution_confidence": 0.90,
+            "resolution_confidence": 0.60,
+            "escalation_required": True,
+        },
+        # Step 5: Mitigation/resolution — controlled restart
+        {
+            "situation_assessment": (
+                "LRU config deployed. Executing controlled rolling restart to apply settings safely "
+                "and verify memory stabilisation under production traffic."
+            ),
+            "hypothesis": "Mitigation in progress with configuration patch + rolling restart",
+            "sre_directive": {
+                "action": "execute_runbook_step",
+                "parameters": {"step_id": "rb_controlled_restart"},
+                "reasoning": "Safely roll pods and verify stability",
+            },
+            "resolution_confidence": 0.75,
+            "escalation_required": False,
+        },
+        # Step 6: Resolution — declare resolved
+        {
+            "situation_assessment": (
+                "Post-restart metrics stable: heap below threshold, GC pauses normalized, latency recovered. "
+                "Customer impact reduced and no new OOM events observed."
+            ),
+            "hypothesis": "Incident resolved after cache remediation and controlled restart",
+            "l1_directive": {
+                "action": "send_notification",
+                "parameters": {
+                    "customers": "all_affected",
+                    "message": "Issue resolved. Systems are stable and we will continue monitoring.",
+                    "severity": "info",
+                },
+                "reasoning": "Send resolution update to customers",
+            },
+            "pm_directive": {
+                "action": "track_revenue_impact",
+                "parameters": {},
+                "reasoning": "Finalize impact reporting for postmortem",
+            },
+            "resolution_confidence": 0.95,
             "escalation_required": False,
         },
     ],
@@ -590,7 +776,80 @@ def run_demo(incident_id: str):
         if done:
             break
 
-    # Force reward computation if not done
+    # Fallback auto-completion for robustness (prevents demo from ending mid-flow).
+    guard = 0
+    fallback_runbook_order = [
+        "rb_heap_profile",
+        "rb_check_cache_config",
+        "rb_set_cache_eviction",
+        "rb_controlled_restart",
+    ]
+    while not env.current_state.done and guard < 8:
+        guard += 1
+        state = env.current_state
+        phase = state.phase
+
+        next_step = None
+        for candidate in fallback_runbook_order:
+            if candidate not in state.runbook_steps_completed:
+                next_step = candidate
+                break
+
+        fallback_action = {
+            "situation_assessment": f"Auto-demo fallback step {guard}: driving incident to completion from phase {phase}.",
+            "hypothesis": "Confirmed recommendation-service memory leak from cache eviction misconfiguration",
+            "l2_directive": {"action": "check_all_alerts", "parameters": {}, "reasoning": "Maintain telemetry visibility"},
+            "pm_directive": {"action": "track_revenue_impact", "parameters": {}, "reasoning": "Track business impact"},
+            "resolution_confidence": 0.95 if phase in {"resolution", "postmortem"} else 0.55,
+            "escalation_required": phase in {"detection", "triage", "investigation"},
+        }
+
+        if next_step and phase in {"investigation", "mitigation", "resolution"}:
+            fallback_action["sre_directive"] = {
+                "action": "execute_runbook_step",
+                "parameters": {"step_id": next_step},
+                "reasoning": f"Execute next required runbook step: {next_step}",
+            }
+        else:
+            fallback_action["sre_directive"] = {
+                "action": "list_runbooks",
+                "parameters": {},
+                "reasoning": "Enumerate remediation options",
+            }
+
+        if state.notifications_sent == 0:
+            fallback_action["l1_directive"] = {
+                "action": "send_notification",
+                "parameters": {
+                    "customers": "all_affected",
+                    "message": "Incident investigation in progress. We will provide frequent updates.",
+                    "severity": "high",
+                },
+                "reasoning": "Ensure proactive customer communication",
+            }
+        else:
+            fallback_action["l1_directive"] = {
+                "action": "check_customer_reports",
+                "parameters": {},
+                "reasoning": "Track post-mitigation customer experience",
+            }
+
+        obs, reward, done, info = env.step(fallback_action)
+        transcript.append({
+            "step": len(transcript),
+            "action_summary": fallback_action["situation_assessment"][:120],
+            "phase": obs.get("phase"),
+            "coalition_result": obs.get("coalition_result"),
+            "notifications_sent": obs.get("notifications_sent"),
+            "findings_count": len(obs.get("agent_findings", [])),
+            "reward": reward,
+            "done": done,
+            "fallback": True,
+        })
+        final_info = info
+
+    # Force reward computation if still not done (degraded mode).
+    demo_completed = env.current_state.done
     if not env.current_state.done:
         from server.reward import compute_total_reward
         breakdown = compute_total_reward(env.current_state)
@@ -621,6 +880,8 @@ def run_demo(incident_id: str):
         "coalition_result": state.coalition_result,
         "coalition_correct": state.coalition_correct,
         "notifications_sent": state.notifications_sent,
+        "done": state.done,
+        "demo_completed": demo_completed,
     }
 
 

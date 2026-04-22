@@ -1,9 +1,79 @@
+# --- Secrets / local env ---
 .env
-*.pyc
+.env.*
+!.env.example
+
+# --- Python bytecode & packaging ---
+*.py[cod]
+*$py.class
 __pycache__/
-.pytest_cache/
-uv.lock
+*.so
+.Python
+*.egg
+*.egg-info/
+.eggs/
+dist/
+build/
+pip-wheel-metadata/
+
+# --- Virtual environments ---
 venv/
 .venv/
+
+# --- Test & type / lint caches ---
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.tox/
+.nox/
+.coverage
+.coverage.*
+htmlcov/
+nosetests.xml
+coverage.xml
+*.cover
+.hypothesis/
+
+# --- Jupyter ---
+.ipynb_checkpoints/
+*.ipynb_checkpoints
+
+# --- OS / editors ---
+.DS_Store
+Thumbs.db
+.idea/
+*.swp
+*.swo
+*~
+
+# --- Project lockfile (repo policy: do not commit uv.lock) ---
+uv.lock
+
+
+# --- Training / RL artifacts (regenerate locally) ---
 training_artifacts/pre_event_reward_curves.json
+grpo_checkpoints/
+**/grpo_checkpoints/**
+wandb/
+episode_rewards.json
 *.png
+
+# --- HF / hub local caches ---
+.cache/
+.huggingface/
+
+# --- Optional frontend tooling ---
+node_modules/
+
+# --- Logs ---
+*.log
+logs/
+
+# --- Legacy / duplicate UIs (canonical: streamlit_app_v2.py, gradio_app.py) ---
+streamlit_app.py
+gradio_app_backup.py
+gradio_app_minimal.py
+
+# --- Local assistant / scratch notes (optional) ---
+CLAUDE.md
+docs/meta/CLAUDE.md

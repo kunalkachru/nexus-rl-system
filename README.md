@@ -27,7 +27,7 @@ NEXUS Enhanced trains an AI Incident Commander to orchestrate 5 specialist agent
 ```bash
 pip install -r requirements.txt
 
-# Run all tests (180 passing)
+# Run all tests (~220+)
 pytest tests/ -q
 
 # Start the server
@@ -92,6 +92,30 @@ Expert criteria rotate every 4 episodes (speed/communication/technical/cost) —
 python training/train.py --episodes 30 --difficulties easy,medium
 ```
 
+## BRD hard gate — OpenEnv (reproduce)
+
+Per [`../design/hackathon_brd.md`](../design/hackathon_brd.md) Section 17, judges expect **OpenEnv (latest release)** usage, not only a custom HTTP server.
+
+**Local (dev machine, after `pip install "openenv>=0.2.3"`):**
+
+```bash
+cd nexus-enhanced
+openenv validate .
+pytest tests/ -q
+uvicorn server.app:app --host 127.0.0.1 --port 7860
+# second terminal:
+openenv validate --url http://127.0.0.1:7860
+```
+
+**HF Space (after `openenv push`):** use your Space URL, e.g. `https://kunalkachru23-nexus-enhanced-stage.hf.space`:
+
+```bash
+openenv validate --url https://kunalkachru23-nexus-enhanced-stage.hf.space
+./gate.sh --skip-regression --skip-local-api --hf-url https://kunalkachru23-nexus-enhanced-stage.hf.space
+```
+
+`requirements.txt` **omits** `openenv` on the Space Docker image to keep builds reliable; the **Colab notebook** installs `openenv>=0.2.3` for the training hard gate. Contract-only routes (`/metadata`, `/schema`, `GET /state`, `POST /mcp`) satisfy `openenv validate --url`; episode logic uses **`/reset`**, **`/step/{session_id}`**, **`/state/{session_id}`** only.
+
 ## API Endpoints
 
 | Method | Path | Description |
@@ -102,7 +126,11 @@ python training/train.py --episodes 30 --difficulties easy,medium
 | GET | `/reward/{session_id}` | Live reward breakdown |
 | POST | `/demo/run/{incident_id}` | Auto-demo mode |
 | GET | `/web` | Incident command dashboard |
-| GET | `/health` | Health check |
+| GET | `/health` | Health (`status: healthy` for OpenEnv CLI) |
+| GET | `/metadata` | OpenEnv discovery stub |
+| GET | `/schema` | OpenEnv schema stub |
+| GET | `/state` | OpenAPI stub (use `/state/{session_id}` for data) |
+| POST | `/mcp` | OpenEnv JSON-RPC stub |
 | GET | `/metrics` | Training metrics |
 
 ## Sub-Theme Coverage
@@ -115,9 +143,17 @@ python training/train.py --episodes 30 --difficulties easy,medium
 - **Snorkel AI** — Rotating expert review board (4 criteria)
 - **Patronus AI** — Live schema drift in INC007 at step 18
 
+## Pitch, plan, and BRD evidence
+
+Documentation lives under [`docs/`](docs/) (guides, deployment, project status, pitch/demo scripts, blog drafts).
+
+- **[`docs/pitch/PITCH.md`](docs/pitch/PITCH.md)** — 3-minute spoken script + 2-minute Q&A bullets (BRD §18.1).
+- **[`docs/project/PLAN_OF_ACTION.md`](docs/project/PLAN_OF_ACTION.md)** — BRD compliance matrix + prioritized todo table.
+- **`scripts/export_reward_plot.py`** — export reward curve PNG from `--url` or `episode_rewards.json` (Criterion 3 slides).
+
 ## Blog Post
 
-See `blog_post.md` for the full HuggingFace blog post (1,300+ words, includes reward model deep-dive, training methodology, and demo walkthrough).
+See [`docs/blog/blog_post.md`](docs/blog/blog_post.md) for the full HuggingFace blog post (1,300+ words, includes reward model deep-dive, training methodology, and demo walkthrough). **Publish** on HuggingFace and add the public URL for BRD §17.3.
 
 ## Team
 

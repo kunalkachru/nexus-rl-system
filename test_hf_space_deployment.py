@@ -1,17 +1,46 @@
 """
-NEXUS Enhanced — HF Space Deployment Regression Tests (Phase 7)
-Runs all critical tests against deployed HF Spaces environment
-Usage: python test_hf_space_deployment.py --url https://kunalkachru23-nexus-enhanced.hf.space
+NEXUS Enhanced — HF Space Deployment Regression Tests
+Runs critical checks against a deployed HF Space.
+
+Usage:
+  python test_hf_space_deployment.py --url https://<space>.hf.space
 """
 
+import os
+from pathlib import Path
 import requests
 import json
 import sys
 import argparse
 import time
 
-# Default to public HF Space
-DEFAULT_URL = "https://kunalkachru23-nexus-enhanced.hf.space"
+def load_dotenv_defaults() -> dict:
+    defaults = {}
+    env_path = Path(".env")
+    if not env_path.exists():
+        return defaults
+    for raw in env_path.read_text().splitlines():
+        line = raw.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        key, value = line.split("=", 1)
+        defaults[key.strip()] = value.strip()
+    return defaults
+
+
+_dotenv_defaults = load_dotenv_defaults()
+_space_repo_id = (
+    os.getenv("SPACE_REPO_ID")
+    or _dotenv_defaults.get("SPACE_REPO_ID")
+    or "kunalkachru23/nexus-enhanced-stage"
+)
+
+# Override precedence: explicit HF_SPACE_URL env > .env HF_SPACE_URL > derived from SPACE_REPO_ID.
+DEFAULT_URL = (
+    os.getenv("HF_SPACE_URL")
+    or _dotenv_defaults.get("HF_SPACE_URL")
+    or f"https://{_space_repo_id.replace('/', '-')}.hf.space"
+)
 
 def print_header(text):
     print(f"\n{'='*70}")
@@ -26,7 +55,7 @@ def test_health(base_url):
         resp = requests.get(f"{base_url}/health", timeout=10)
         assert resp.status_code == 200, f"Expected 200, got {resp.status_code}"
         data = resp.json()
-        assert data.get("status") == "ok", f"Status not 'ok': {data}"
+        assert data.get("status") in ("ok", "healthy"), f"Unexpected health status: {data}"
 
         print(f"✅ Status: {data['status']}")
         print(f"✅ Environment: {data.get('environment', 'N/A')}")
@@ -52,19 +81,20 @@ def test_reset_endpoint(base_url):
         obs = resp.json()
 
         # Validate response structure
-        required_fields = ["session_id", "incident_id", "phase", "step", "observation"]
+        required_fields = ["session_id", "observation"]
         for field in required_fields:
             assert field in obs, f"Missing field: {field}"
 
-        assert obs["incident_id"] == "INC003"
-        assert obs["phase"] == "detection"
-        assert obs["step"] == 0
+        initial_obs = obs["observation"]
+        assert initial_obs["incident_id"] == "INC003"
+        assert initial_obs["phase"] == "detection"
+        assert initial_obs["step"] == 0
 
         session_id = obs["session_id"]
         print(f"✅ Session ID: {session_id[:8]}...")
-        print(f"✅ Incident: {obs.get('incident_title', 'INC003')}")
-        print(f"✅ Phase: {obs['phase']}")
-        print(f"✅ Step: {obs['step']}")
+        print(f"✅ Incident: {initial_obs.get('incident_title', 'INC003')}")
+        print(f"✅ Phase: {initial_obs['phase']}")
+        print(f"✅ Step: {initial_obs['step']}")
         print(f"\n✅ PASSED: Reset endpoint returns proper structure")
         return True, session_id
     except Exception as e:
@@ -80,11 +110,14 @@ def test_step_endpoint(base_url, session_id):
             "situation_assessment": "P1 incident detected. Memory pressure on recommendation-service.",
             "hypothesis": "Memory leak in ML model cache",
             "resolution_confidence": 0.0,
-            "l1_action": {"action": "send_notification", "parameters": {}, "reasoning": ""},
-            "l2_action": {"action": "query_logs", "parameters": {}, "reasoning": ""},
-            "sre_action": {"action": "list_runbooks", "parameters": {}, "reasoning": ""},
-            "pm_action": {"action": "get_sla_status", "parameters": {}, "reasoning": ""},
-            "severity_assessment": "p2",
+            "l1_directive": {
+                "action": "send_notification",
+                "parameters": {"customers": "affected_customers", "message": "Investigating", "severity": "high"},
+                "reasoning": "Notify customers early"
+            },
+            "l2_directive": {"action": "check_all_alerts", "parameters": {}, "reasoning": ""},
+            "sre_directive": {"action": "list_runbooks", "parameters": {}, "reasoning": ""},
+            "pm_directive": {"action": "check_sla_status", "parameters": {}, "reasoning": ""},
             "escalation_required": False,
         }
 
@@ -145,23 +178,27 @@ def test_learning_curve(base_url):
         assert resp.status_code == 200, f"Learning curve failed: {resp.status_code}"
         data = resp.json()
 
-        assert "episodes" in data, "Missing episodes in response"
-        episodes = data.get("episodes", [])
+        assert "rewards" in data, "Missing rewards in response"
+        rewards = data.get("rewards", [])
+        rolling = data.get("rolling_avg", [])
 
-        print(f"✅ Episodes recorded: {len(episodes)}")
+        print(f"✅ Episodes recorded: {len(rewards)}")
 
-        if episodes:
-            first = episodes[0]
-            last = episodes[-1]
-            print(f"✅ First episode reward: {first.get('reward', 'N/A'):.4f}")
-            print(f"✅ Last episode reward: {last.get('reward', 'N/A'):.4f}")
+        if rewards:
+            first = rewards[0]
+            last = rewards[-1]
+            print(f"✅ First episode reward: {first:.4f}")
+            print(f"✅ Last episode reward: {last:.4f}")
 
             # Check for improvement trend
-            if len(episodes) > 1:
-                avg_first_half = sum(e.get('reward', 0) for e in episodes[:len(episodes)//2]) / (len(episodes)//2 + 1)
-                avg_second_half = sum(e.get('reward', 0) for e in episodes[len(episodes)//2:]) / (len(episodes) - len(episodes)//2 + 1)
+            if len(rewards) > 1:
+                split = len(rewards) // 2
+                avg_first_half = sum(rewards[:split]) / max(split, 1)
+                avg_second_half = sum(rewards[split:]) / max(len(rewards) - split, 1)
                 print(f"✅ Avg first half: {avg_first_half:.4f}")
                 print(f"✅ Avg second half: {avg_second_half:.4f}")
+                if rolling:
+                    print(f"✅ Latest rolling avg: {rolling[-1]:.4f}")
 
         print(f"\n✅ PASSED: Learning curve endpoint working")
         return True
@@ -213,11 +250,14 @@ def test_full_episode(base_url):
                 "situation_assessment": f"Step {step_num}: investigating memory issue",
                 "hypothesis": "Memory leak in cache",
                 "resolution_confidence": 0.85 if step_num > 18 else 0.0,
-                "l1_action": {"action": "send_notification", "parameters": {}, "reasoning": ""},
-                "l2_action": {"action": "query_logs", "parameters": {}, "reasoning": ""},
-                "sre_action": {"action": "list_runbooks", "parameters": {}, "reasoning": ""},
-                "pm_action": {"action": "get_sla_status", "parameters": {}, "reasoning": ""},
-                "severity_assessment": "p2",
+                "l1_directive": {
+                    "action": "send_notification",
+                    "parameters": {"customers": "affected_customers", "message": "Investigating", "severity": "high"},
+                    "reasoning": ""
+                },
+                "l2_directive": {"action": "check_all_alerts", "parameters": {}, "reasoning": ""},
+                "sre_directive": {"action": "list_runbooks", "parameters": {}, "reasoning": ""},
+                "pm_directive": {"action": "check_sla_status", "parameters": {}, "reasoning": ""},
                 "escalation_required": False,
             }
 
@@ -244,6 +284,32 @@ def test_full_episode(base_url):
         print(f"❌ FAILED: {e}")
         return False
 
+
+def test_auto_demo_inc003(base_url):
+    """TEST 8: INC003 live demo reaches completion state"""
+    print_header("TEST 8: Auto-Demo INC003")
+
+    try:
+        resp = requests.post(f"{base_url}/demo/run/INC003", timeout=20)
+        assert resp.status_code == 200, f"Demo endpoint failed: {resp.status_code}"
+        data = resp.json()
+
+        assert data.get("incident_id") == "INC003", f"Unexpected incident_id: {data.get('incident_id')}"
+        assert "transcript" in data and len(data["transcript"]) >= 2, "Demo transcript missing/too short"
+        assert data.get("done") is True, f"Demo did not complete (phase={data.get('final_phase')}, steps={data.get('total_steps')})"
+        assert data.get("demo_completed") is True, "Demo completed flag is false"
+        assert data.get("reward_breakdown"), "Missing reward breakdown"
+
+        print(f"✅ Final phase: {data.get('final_phase')}")
+        print(f"✅ Total steps: {data.get('total_steps')}")
+        print(f"✅ Reward total: {data['reward_breakdown'].get('total')}")
+        print(f"\n✅ PASSED: Auto-demo reaches completed episode")
+        return True
+    except Exception as e:
+        print(f"❌ FAILED: {e}")
+        return False
+
+
 def main():
     parser = argparse.ArgumentParser(description="Test HF Space deployment")
     parser.add_argument("--url", default=DEFAULT_URL, help=f"Base URL (default: {DEFAULT_URL})")
@@ -269,6 +335,7 @@ def main():
     results.append(("Learning Curve", test_learning_curve(base_url)))
     results.append(("HTML Dashboard", test_html_dashboard(base_url)))
     results.append(("Full Episode", test_full_episode(base_url)))
+    results.append(("Auto Demo INC003", test_auto_demo_inc003(base_url)))
 
     # Summary
     print_header("TEST SUMMARY")

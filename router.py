@@ -31,7 +31,7 @@ def fallback_html():
 
 @app.get("/health")
 def health():
-    return {"status": "ok", "mode": "router"}
+    return {"status": "healthy", "mode": "router"}
 
 if __name__ == "__main__":
     import uvicorn

@@ -111,7 +111,7 @@ NEXUS Enhanced is a multi-agent incident response RL environment for the Meta Py
    - Metrics: `/metrics`, `/learning-curve`, `/health`
    - API: `/reset`, `/step/{session_id}`
 
-**Documentation**: `HF_SPACES_DEPLOYMENT.md`
+**Documentation**: [`../deployment/HF_SPACES_DEPLOYMENT.md`](../deployment/HF_SPACES_DEPLOYMENT.md)
 
 ---
 
@@ -141,7 +141,7 @@ NEXUS Enhanced is a multi-agent incident response RL environment for the Meta Py
 │                                                             │
 │  Port 7860: FastAPI (Judge Dashboard + API)                │
 │  ├─ GET /                 → index.html (Chart.js)          │
-│  ├─ GET /health           → {"status": "ok"}               │
+│  ├─ GET /health           → {"status": "healthy", ...}     │
 │  ├─ POST /reset           → Initialize episode             │
 │  ├─ POST /step/{sid}      → Execute IC action              │
 │  ├─ GET /metrics          → Training stats                 │
@@ -177,13 +177,30 @@ NEXUS Enhanced is a multi-agent incident response RL environment for the Meta Py
 ```
 nexus-enhanced/
 ├── Dockerfile                          # Multi-service Docker
-├── start.sh                            # Dual-service startup
 ├── requirements.txt                    # All Python deps
 ├── test_regression_local.py            # Phase 1: Local tests (PASSING)
-├── test_local_deployment.sh            # Phase 5: Integration test script
 ├── test_hf_space_deployment.py         # Phase 7: Remote tests
-├── HF_SPACES_DEPLOYMENT.md             # Phase 6: Deployment guide
-├── IMPLEMENTATION_SUMMARY.md           # This file
+├── README.md                           # Hub card + entry overview
+├── start.sh                            # Docker/HF entry (FastAPI + Streamlit) — must stay at root
+├── gate.sh                             # Wrapper → scripts/shell/gate.sh
+├── test_local_deployment.sh            # Wrapper → scripts/shell/
+├── test_api_complete.sh                # Wrapper → scripts/shell/
+│
+├── scripts/
+│   ├── shell/                          # Dev & CI shell harnesses (see scripts/shell/README.md)
+│   ├── export_reward_plot.py
+│   └── __init__.py
+│
+├── docs/
+│   ├── guides/QUICK_START.md
+│   ├── deployment/HF_SPACES_DEPLOYMENT.md
+│   ├── deployment/DEPLOYMENT_CHECKLIST.md
+│   ├── project/IMPLEMENTATION_SUMMARY.md   # This file
+│   ├── project/PLAN_OF_ACTION.md
+│   ├── project/PROJECT_STATUS.md
+│   ├── pitch/PITCH.md
+│   ├── pitch/DEMO_MANUAL_TEST_CASES.md
+│   └── blog/…                          # Blog drafts
 │
 ├── server/
 │   ├── app.py                          # FastAPI endpoints

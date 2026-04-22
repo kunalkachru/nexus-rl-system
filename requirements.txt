@@ -10,8 +10,9 @@ matplotlib>=3.8.0
 python-multipart>=0.0.6
 jupyter
 nbconvert
+# OpenEnv CLI is validated via local toolchain gates, not installed in HF Space runtime.
+# Keep runtime dependencies minimal for reliable Space builds.
 # Heavy ML dependencies (install in Colab only — see grpo_colab_v2.ipynb Cell 1)
-# openenv>=0.2.3
 # trl>=0.8.0
 # unsloth
 # transformers>=4.40.0

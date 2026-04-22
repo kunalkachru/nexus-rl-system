@@ -6,10 +6,11 @@
 
 ### Local Verification (2 min)
 ```bash
-# All tests pass
-python test_regression_local.py
+# Single command gate (localhost tests -> openenv validate)
+./gate.sh --skip-regression
 
-# Expected: ✅ 7/7 TESTS PASSED
+# Optional deeper local run:
+./gate.sh
 ```
 
 ### Deploy to HF Spaces (5-10 min)
@@ -17,27 +18,37 @@ python test_regression_local.py
 # Set HF token (use your actual token)
 export HF_TOKEN='hf_xxxxxxxxxxxxx'
 
-# Deploy directly to HF Spaces (no git required)
-python deploy_to_hf_spaces.py
+# Preferred: OpenEnv push (no git required)
+openenv validate .
+openenv push . --repo-id kunalkachru23/nexus-enhanced-stage
 
-# Monitor: https://huggingface.co/spaces/kunalkachru23/nexus-enhanced
+# Alternative: python deploy_to_hf_spaces.py
+
+# Monitor: https://huggingface.co/spaces/kunalkachru23/nexus-enhanced-stage
 # Wait for "Running" status
 ```
 
 ### Verify Deployment (2 min)
 ```bash
-# Test remote endpoints
-python test_hf_space_deployment.py --url https://kunalkachru23-nexus-enhanced.hf.space
+# Validate deployed space via same gate pipeline
+./gate.sh --skip-regression --skip-local-api --hf-url https://kunalkachru23-nexus-enhanced-stage.hf.space
 
-# Expected: ✅ 7/7 TESTS PASSED
+# Expected: ✅ 8/8 remote tests (see test_hf_space_deployment.py)
 ```
 
 ### Start Training on Colab (6 hours)
 ```
 1. Open: notebooks/grpo_colab_v2.ipynb
-2. Verify: BASE_URL = "https://kunalkachru23-nexus-enhanced.hf.space"
-3. Run all cells
-4. Watch dashboard: https://kunalkachru23-nexus-enhanced.hf.space/
+2. Verify: BASE_URL = "https://kunalkachru23-nexus-enhanced-stage.hf.space"
+3. Run cells in order. Tunables (`BASE_URL`, `ONE_ROUND_TRAINING`, prompt counts, model id, GRPO batching, etc.) live in the **configuration cell** near the top (or set `NEXUS_*` environment variables before running it). For a **first successful round**, keep `ONE_ROUND_TRAINING = True` there (or `NEXUS_ONE_ROUND=true`); use `False` / `NEXUS_ONE_ROUND=false` for the full run.
+4. Watch dashboard: https://kunalkachru23-nexus-enhanced-stage.hf.space/
+```
+
+### Export reward plot for slides (BRD Criterion 3)
+```bash
+python scripts/export_reward_plot.py --url https://kunalkachru23-nexus-enhanced-stage.hf.space
+# or from local episode_rewards.json:
+python scripts/export_reward_plot.py --file episode_rewards.json --out outputs/reward_export.png
 ```
 
 ---
@@ -52,7 +63,7 @@ python test_hf_space_deployment.py --url https://kunalkachru23-nexus-enhanced.hf
 | 4 | Colab training script (GRPO) | ✅ |
 | 5 | Docker multi-service (FastAPI + Streamlit) | ✅ |
 | 6 | HF Spaces deployment guide | ✅ |
-| 7 | Remote regression tests (7/7) | ✅ |
+| 7 | Remote regression tests (8/8) | ✅ |
 | 8 | Training on Colab GPU | ⏳ Next |
 | 9 | Blog post + Video | 📋 TODO |
 
@@ -82,11 +93,18 @@ python test_hf_space_deployment.py --url https://kunalkachru23-nexus-enhanced.hf
 **Training**:
 - `notebooks/grpo_colab_v2.ipynb` - GRPO pipeline
 
-**Documentation**:
-- `IMPLEMENTATION_SUMMARY.md` - Overview
-- `HF_SPACES_DEPLOYMENT.md` - Deployment steps
-- `DEPLOYMENT_CHECKLIST.md` - Pre-flight checks
-- `QUICK_START.md` - This file
+**Shell automation** (canonical copies under `scripts/shell/`; root `gate.sh`, `test_local_deployment.sh`, `test_api_complete.sh` are thin wrappers so old commands keep working):
+
+- `scripts/shell/gate.sh` — pytest + OpenEnv + optional HF checks (same as `./gate.sh`).
+- `scripts/shell/test_local_deployment.sh` — local FastAPI + Streamlit integration harness.
+- `scripts/shell/test_api_complete.sh` — curl INC003 walkthrough (needs API on port 7860).
+- `start.sh` — **stays at repo root** (Docker `CMD`); not under `scripts/shell/`.
+
+**Documentation** (paths from `nexus-enhanced/` root):
+- `docs/project/IMPLEMENTATION_SUMMARY.md` - Overview
+- `docs/deployment/HF_SPACES_DEPLOYMENT.md` - Deployment steps
+- `docs/deployment/DEPLOYMENT_CHECKLIST.md` - Pre-flight checks
+- `docs/guides/QUICK_START.md` - This file
 
 ---
 
@@ -118,12 +136,12 @@ git add -A
 git commit -m "Deploy phase 6"
 git push hf main
 
-# Monitor: https://huggingface.co/spaces/kunalkachru23/nexus-enhanced
+# Monitor: https://huggingface.co/spaces/kunalkachru23/nexus-enhanced-stage
 ```
 
 ### Test Deployed Environment
 ```bash
-python test_hf_space_deployment.py --url https://kunalkachru23-nexus-enhanced.hf.space
+python test_hf_space_deployment.py --url https://kunalkachru23-nexus-enhanced-stage.hf.space
 ```
 
 ---
@@ -132,7 +150,7 @@ python test_hf_space_deployment.py --url https://kunalkachru23-nexus-enhanced.hf
 
 | Service | Local | Deployed |
 |---------|-------|----------|
-| Judge Dashboard | `http://localhost:7860/` | `https://kunalkachru23-nexus-enhanced.hf.space/` |
+| Judge Dashboard | `http://localhost:7860/` | `https://kunalkachru23-nexus-enhanced-stage.hf.space/` |
 | API Health | `http://localhost:7860/health` | `.../health` |
 | Validation UI | `http://localhost:8501` | (Internal only) |
 | Metrics | `http://localhost:7860/metrics` | `.../metrics` |
@@ -185,7 +203,7 @@ A: Verify BASE_URL in notebook matches your space URL. Test: `python test_hf_spa
 A: This is expected (sparse reward design). Wait until `done=True` to get final reward.
 
 **Q: Dashboard doesn't update**  
-A: Check that FastAPI is running: `curl https://kunalkachru23-nexus-enhanced.hf.space/health`
+A: Check that FastAPI is running: `curl https://kunalkachru23-nexus-enhanced-stage.hf.space/health`
 
 ---
 

@@ -28,8 +28,8 @@
 - [x] `requirements.txt` - All Python dependencies
 
 ### Documentation
-- [x] IMPLEMENTATION_SUMMARY.md - Overview of all phases
-- [x] HF_SPACES_DEPLOYMENT.md - Step-by-step deployment
+- [x] `../project/IMPLEMENTATION_SUMMARY.md` - Overview of all phases
+- [x] `HF_SPACES_DEPLOYMENT.md` - Step-by-step deployment
 - [x] Code comments - Docstrings and annotations
 - [x] README.md (if exists) - Project overview
 
@@ -96,7 +96,7 @@ Once HF Space shows "Running" status:
 # Test public health endpoint
 curl https://kunalkachru23-nexus-enhanced.hf.space/health
 
-# Expected: {"status": "ok", "environment": "nexus-enhanced", ...}
+# Expected: {"status": "healthy", "environment": "nexus-enhanced", ...}
 
 # Run full remote test suite
 python test_hf_space_deployment.py --url https://kunalkachru23-nexus-enhanced.hf.space

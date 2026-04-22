@@ -7,14 +7,40 @@ Uploads all necessary files to HF Spaces repository
 import os
 import sys
 from pathlib import Path
-from huggingface_hub import HfApi, RepoType
+import argparse
+from huggingface_hub import HfApi
 
-def deploy_to_hf_spaces(space_id="kunalkachru23/nexus-enhanced", repo_type="space"):
+
+def load_dotenv_defaults() -> dict:
+    defaults = {}
+    env_path = Path(".env")
+    if not env_path.exists():
+        return defaults
+
+    for raw in env_path.read_text().splitlines():
+        line = raw.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        key, value = line.split("=", 1)
+        defaults[key.strip()] = value.strip()
+    return defaults
+
+
+_dotenv_defaults = load_dotenv_defaults()
+DEFAULT_SPACE_ID = (
+    os.getenv("HF_SPACE_ID")
+    or os.getenv("SPACE_REPO_ID")
+    or _dotenv_defaults.get("SPACE_REPO_ID")
+    or "kunalkachru23/nexus-enhanced-stage"
+)
+
+
+def deploy_to_hf_spaces(space_id=DEFAULT_SPACE_ID, repo_type="space"):
     """
     Deploy NEXUS Enhanced directly to HF Spaces
 
     Args:
-        space_id: HF Spaces ID (default: kunalkachru23/nexus-enhanced)
+        space_id: HF Spaces ID (default: from .env SPACE_REPO_ID or fallback)
         repo_type: Type of repo (default: "space")
     """
 
@@ -45,11 +71,11 @@ def deploy_to_hf_spaces(space_id="kunalkachru23/nexus-enhanced", repo_type="spac
         # Notebooks
         ("notebooks/grpo_colab_v2.ipynb", "notebooks/grpo_colab_v2.ipynb"),
 
-        # Documentation
-        ("IMPLEMENTATION_SUMMARY.md", "IMPLEMENTATION_SUMMARY.md"),
-        ("HF_SPACES_DEPLOYMENT.md", "HF_SPACES_DEPLOYMENT.md"),
-        ("DEPLOYMENT_CHECKLIST.md", "DEPLOYMENT_CHECKLIST.md"),
-        ("QUICK_START.md", "QUICK_START.md"),
+        # Documentation (under docs/)
+        ("docs/project/IMPLEMENTATION_SUMMARY.md", "docs/project/IMPLEMENTATION_SUMMARY.md"),
+        ("docs/deployment/HF_SPACES_DEPLOYMENT.md", "docs/deployment/HF_SPACES_DEPLOYMENT.md"),
+        ("docs/deployment/DEPLOYMENT_CHECKLIST.md", "docs/deployment/DEPLOYMENT_CHECKLIST.md"),
+        ("docs/guides/QUICK_START.md", "docs/guides/QUICK_START.md"),
     ]
 
     print(f"\n🚀 Deploying NEXUS Enhanced to HF Spaces: {space_id}")
@@ -101,6 +127,14 @@ def deploy_to_hf_spaces(space_id="kunalkachru23/nexus-enhanced", repo_type="spac
     return True
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Deploy NEXUS Enhanced to HF Spaces")
+    parser.add_argument(
+        "--space-id",
+        default=DEFAULT_SPACE_ID,
+        help=f"HF Space repo id (default: {DEFAULT_SPACE_ID})",
+    )
+    args = parser.parse_args()
+
     # Check if HF token is set
     if not os.getenv("HF_TOKEN"):
         print("❌ Error: HF_TOKEN environment variable not set")
@@ -111,5 +145,5 @@ if __name__ == "__main__":
         sys.exit(1)
 
     # Deploy
-    success = deploy_to_hf_spaces()
+    success = deploy_to_hf_spaces(space_id=args.space_id)
     sys.exit(0 if success else 1)
