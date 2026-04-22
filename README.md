@@ -86,11 +86,23 @@ Expert criteria rotate every 4 episodes (speed/communication/technical/cost) —
 
 ```bash
 # GRPO fine-tuning (run in Colab with GPU)
-# Open notebooks/grpo_colab.ipynb
+# Open notebooks/grpo_colab_v2.ipynb
 
 # Pre-event baseline (30 episodes, avg reward 0.265)
 python training/train.py --episodes 30 --difficulties easy,medium
 ```
+
+## Training data visualization
+
+Episode rewards from the deployed Space (`GET /learning-curve`) — same data as the dashboard training tab. Image is committed for README / slides; refresh after significant training:
+
+```bash
+python scripts/export_reward_plot.py \
+  --url https://kunalkachru23-nexus-enhanced-stage.hf.space \
+  --out docs/images/training_reward_curve.png
+```
+
+![Reward history (HF stage Space)](docs/images/training_reward_curve.png)
 
 ## BRD hard gate — OpenEnv (reproduce)
 
@@ -149,7 +161,7 @@ Documentation lives under [`docs/`](docs/) (guides, deployment, project status, 
 
 - **[`docs/pitch/PITCH.md`](docs/pitch/PITCH.md)** — 3-minute spoken script + 2-minute Q&A bullets (BRD §18.1).
 - **[`docs/project/PLAN_OF_ACTION.md`](docs/project/PLAN_OF_ACTION.md)** — BRD compliance matrix + prioritized todo table.
-- **`scripts/export_reward_plot.py`** — export reward curve PNG from `--url` or `episode_rewards.json` (Criterion 3 slides).
+- **`scripts/export_reward_plot.py`** — export reward curve PNG from `--url` or `episode_rewards.json` (Criterion 3 slides). Committed chart: **`docs/images/training_reward_curve.png`** (see section above).
 
 ## Blog Post
 

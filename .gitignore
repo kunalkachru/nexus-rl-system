@@ -57,6 +57,7 @@ grpo_checkpoints/
 wandb/
 episode_rewards.json
 *.png
+!docs/images/training_reward_curve.png
 
 # --- HF / hub local caches ---
 .cache/
