@@ -8,7 +8,7 @@
 
 ```bash
 # Terminal 1: Keep this visible
-curl -s https://kunalkachru23-nexus-enhanced.hf.space/learning-curve | python3 -c "
+curl -s https://kunalkachru23-nexus-enhanced-stage.hf.space/learning-curve | python3 -c "
 import sys, json
 data = json.load(sys.stdin)
 print(f'Episodes: {len(data[\"rewards\"])}')
@@ -18,7 +18,7 @@ print(f'Improvement: +{data[\"improvement\"]*100:.1f}%')
 "
 
 # Terminal 2: Ready to show episode data
-curl -s https://kunalkachru23-nexus-enhanced.hf.space/learning-curve > /tmp/curve.json
+curl -s https://kunalkachru23-nexus-enhanced-stage.hf.space/learning-curve > /tmp/curve.json
 ```
 
 ---
@@ -26,7 +26,7 @@ curl -s https://kunalkachru23-nexus-enhanced.hf.space/learning-curve > /tmp/curv
 ## [0:00–0:15] CONTEXT SETTING
 
 **Say:**
-"Let me show you NEXUS in action. This is a real-time incident response environment running on HuggingFace Spaces. We've trained a Qwen2.5-1.5B model on it using GRPO. Right now, it's solved 99 incidents."
+"Let me show you NEXUS in action. This is a real-time incident response environment running on HuggingFace Spaces. We've trained a Qwen2.5-1.5B model on it using GRPO. In the latest snapshot, it has 120 completed reward episodes."
 
 ---
 
@@ -35,20 +35,20 @@ curl -s https://kunalkachru23-nexus-enhanced.hf.space/learning-curve > /tmp/curv
 **Show Terminal 1 output:**
 
 ```
-Episodes: 99
-Avg: 0.5060
+Episodes: 120
+Avg: 0.4063
 Best: 0.9484
-Improvement: +24.1%
+Improvement: +53.3%
 ```
 
 **Say:**
-"This is live data from our `/learning-curve` API endpoint. The untrained baseline is 0.265. We're now at 0.506 average—that's a 24% improvement in just 99 episodes.
+"This is live data from our `/learning-curve` API endpoint. The untrained baseline is 0.265. We're now at 0.4063 average—that's a 53.3% improvement over baseline with 120 completed episodes.
 
 The best episode hit 0.9484. That means on some incidents, the IC got nearly everything right: diagnosed the root cause, notified customers proactively, executed the mitigation flawlessly."
 
 **[Optional] Show the raw JSON:**
 ```bash
-curl -s https://kunalkachru23-nexus-enhanced.hf.space/learning-curve | head -20
+curl -s https://kunalkachru23-nexus-enhanced-stage.hf.space/learning-curve | head -20
 ```
 
 ---
@@ -157,7 +157,7 @@ This forces genuine multi-agent interaction. The IC can't just brute-force solve
 
 ```bash
 # Show raw JSON
-curl -s https://kunalkachru23-nexus-enhanced.hf.space/learning-curve | python3 -m json.tool | head -30
+curl -s https://kunalkachru23-nexus-enhanced-stage.hf.space/learning-curve | python3 -m json.tool | head -30
 ```
 
 "This is the real training data. 99 episodes, each one evaluated by the full 6-dimensional reward model. The data is there; the visualization is just cosmetic."

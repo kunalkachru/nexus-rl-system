@@ -32,6 +32,7 @@
 ## Observable evidence (~35 s) — Criterion 3
 
 - Show **dashboard** reward curve and rolling average vs **baseline** (pre-event benchmark).
+- Use one canonical metrics callout (snapshot 2026-04-22 UTC): **episodes 120**, **avg 0.4063**, **best 0.9484**, **+53.3% vs baseline 0.265**.
 - One click: **Run Auto-Demo** on INC003 → completed episode + reward breakdown.
 - Optional: “We export the same curve for slides via `python scripts/export_reward_plot.py --url …`.”
 
@@ -77,3 +78,7 @@ Answer in **short paragraphs**; do not invent numbers not on the dashboard.
 2. **Run Auto-Demo** INC003 (20–30 s).  
 3. Manual tab → **Start Test** → **Guided: fill + execute** until **Complete** (45–60 s).  
 4. If asked for artefacts: show `outputs/reward_export.png` from export script or Colab plots.
+
+Use stage URL consistently in demo:
+
+- `https://kunalkachru23-nexus-enhanced-stage.hf.space/`
