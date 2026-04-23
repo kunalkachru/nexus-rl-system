@@ -1,6 +1,12 @@
 #!/bin/bash
 # Start FastAPI (public) + Streamlit (internal validation)
 
+# Prefer project venv (parent of nexus-enhanced) so uvicorn/streamlit resolve without manual activate
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+if [ -x "$SCRIPT_DIR/../venv/bin/uvicorn" ]; then
+  export PATH="$SCRIPT_DIR/../venv/bin:$PATH"
+fi
+
 # Function to cleanup child processes on exit
 cleanup() {
     echo "Shutting down services..."

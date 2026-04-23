@@ -82,6 +82,11 @@
             font-size: 0.85em;
             color: #64748b;
         }
+        .subnote {
+            margin-top: 8px;
+            font-size: 0.82em;
+            color: #94a3b8;
+        }
 
         .section {
             margin-bottom: 40px;
@@ -93,6 +98,11 @@
             color: #f1f5f9;
             border-left: 4px solid #0ea5e9;
             padding-left: 15px;
+        }
+        .section-note {
+            margin: -8px 0 14px 0;
+            color: #94a3b8;
+            font-size: 0.88em;
         }
 
         .chart-container {
@@ -342,6 +352,16 @@
             padding: 20px;
             margin-top: 20px;
         }
+        .inline-link {
+            display: inline-block;
+            margin-top: 8px;
+            color: #38bdf8;
+            text-decoration: none;
+            font-size: 0.9em;
+        }
+        .inline-link:hover {
+            text-decoration: underline;
+        }
 
         .result-item {
             display: flex;
@@ -390,11 +410,13 @@
                     <div class="metric-label">Episodes Completed</div>
                     <div class="metric-value" id="episodes-count">0</div>
                     <div class="metric-description">Total training episodes</div>
+                    <div class="subnote">Aggregate across all local runs</div>
                 </div>
                 <div class="metric-card">
                     <div class="metric-label">Average Reward</div>
                     <div class="metric-value" id="avg-reward">0.00</div>
                     <div class="metric-description">Mean of all completed episodes</div>
+                    <div class="subnote">Scope: aggregate view</div>
                 </div>
                 <div class="metric-card">
                     <div class="metric-label">Best Reward</div>
@@ -412,14 +434,17 @@
         <!-- Reward Curve Chart -->
         <div class="section">
             <div class="section-title">📈 Reward Curve (Learning Progress)</div>
+            <div class="section-note">Training reward history in aggregate mode. Use Advanced Metrics for per-run filtering.</div>
             <div class="chart-container">
                 <canvas id="rewardChart"></canvas>
             </div>
+            <a class="inline-link" href="/metrics-dashboard">Open Advanced Metrics (live + Colab exports tab)</a>
         </div>
 
         <!-- Demo Section -->
         <div class="section">
             <div class="section-title">▶️ Live Demo: INC003 (Memory Leak)</div>
+            <div class="section-note">Demo output comes from a scripted fresh session; it is separate from the training reward curve.</div>
             <button class="demo-button" id="demo-button" onclick="runDemo()">Run Auto-Demo</button>
             <div id="demo-status" style="display: none;">
                 <div class="spinner"></div>
@@ -430,6 +455,7 @@
         <!-- Episode History -->
         <div class="section">
             <div class="section-title">📋 Episode History</div>
+            <div class="section-note">Shows completed sessions currently held in server memory (most recent first).</div>
             <div class="episode-history">
                 <div class="episode-row" style="background: #334155; font-weight: 600;">
                     <div>Episode</div>
@@ -467,6 +493,7 @@
                                 <option value="INC005">INC005: Config Deployment Error (Hard)</option>
                                 <option value="INC006">INC006: Multi-Region Cascade (Very Hard)</option>
                                 <option value="INC007">INC007: CrowdStrike-Scale Global (Nightmare)</option>
+                                <option value="INC008">INC008: EA — Board vs School Concert (Personal, Easy)</option>
                             </select>
                         </div>
 
