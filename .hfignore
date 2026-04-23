@@ -60,3 +60,7 @@ gradio_app_backup.py
 gradio_app_minimal.py
 streamlit_app.py
 router.py
+
+# External archive root (outside repo)
+../archive/
+../archive/**

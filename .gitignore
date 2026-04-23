@@ -81,3 +81,7 @@ gradio_app_minimal.py
 # --- Local assistant / scratch notes (optional) ---
 CLAUDE.md
 docs/meta/CLAUDE.md
+
+# --- External archive root (outside repo) ---
+../archive/
+../archive/**
