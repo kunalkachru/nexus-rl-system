@@ -35,6 +35,7 @@ gate.sh
 notebooks/*
 !notebooks/grpo_colab_v2.ipynb
 !notebooks/grpo_colab_enhanced.ipynb
+!notebooks/grpo_colab_longrun_resumable.py
 training
 train.py
 training_simulator.py

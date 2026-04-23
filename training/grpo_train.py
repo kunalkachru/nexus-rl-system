@@ -147,7 +147,7 @@ def build_grpo_dataset(
         difficulties = ["easy", "medium", "hard"]
 
     incident_pool = {
-        "easy": ["INC001", "INC002"],
+        "easy": ["INC001", "INC002", "INC008"],
         "medium": ["INC003", "INC004"],
         "hard": ["INC005", "INC006"],
         "nightmare": ["INC007"],

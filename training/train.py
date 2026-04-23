@@ -35,7 +35,7 @@ from training.client import NexusClient, _baseline_policy
 ARTIFACTS_DIR = Path(__file__).parent.parent / "training_artifacts"
 DIFFICULTIES = ["easy", "medium", "hard", "nightmare"]
 INCIDENT_BY_DIFFICULTY = {
-    "easy": ["INC001", "INC002"],
+    "easy": ["INC001", "INC002", "INC008"],
     "medium": ["INC003", "INC004"],
     "hard": ["INC005", "INC006"],
     "nightmare": ["INC007"],

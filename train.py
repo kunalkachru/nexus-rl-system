@@ -108,7 +108,7 @@ class RewardConditionedPolicy:
 # ---------------------------------------------------------------------------
 
 DIFFICULTY_INCIDENTS = {
-    "easy": ["INC001", "INC002"],
+    "easy": ["INC001", "INC002", "INC008"],
     "medium": ["INC003", "INC004"],
     "hard": ["INC005", "INC006"],
     "very_hard": ["INC006"],

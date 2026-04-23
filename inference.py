@@ -5,7 +5,7 @@ Usage:
     # Scripted baseline on INC003 (no API key needed)
     python inference.py --incident INC003 --policy baseline
 
-    # Run all 7 incidents once each with verbose output
+    # Run all incidents once each with verbose output
     python inference.py --policy baseline --all-incidents --verbose
 
     # Run 5 episodes on medium difficulty, save results
@@ -308,7 +308,7 @@ def main():
     )
     parser.add_argument("--server", default="http://localhost:7860", help="NEXUS server URL")
     parser.add_argument("--incident", help="Specific incident ID (e.g. INC003)")
-    parser.add_argument("--all-incidents", action="store_true", help="Run all 7 incidents once each")
+    parser.add_argument("--all-incidents", action="store_true", help="Run all registered incidents once each")
     parser.add_argument("--difficulty", choices=["easy", "medium", "hard", "very_hard", "nightmare"],
                         help="Select incidents by difficulty (random if no --incident)")
     parser.add_argument("--episodes", type=int, default=1, help="Number of episodes to run")
