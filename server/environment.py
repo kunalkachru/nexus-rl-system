@@ -59,7 +59,8 @@ class NexusEnvironment:
         "action_space": "structured_dict",
     }
 
-    def __init__(self, difficulty: str = "easy", seed: Optional[int] = None):
+    def __init__(self, difficulty: Optional[str] = None, seed: Optional[int] = None):
+        # difficulty=None → follow process-wide adaptive tier (Theme 4, multi-session)
         self.difficulty_adapter = DifficultyAdapter(starting_difficulty=difficulty)
         self.seed = seed
         self._episode_count = 0
@@ -255,8 +256,7 @@ class NexusEnvironment:
             reward = breakdown.total
 
             self._episode_count += 1
-            self.difficulty_adapter.record_episode(reward)
-            new_difficulty = self.difficulty_adapter.maybe_advance()
+            new_difficulty = self.difficulty_adapter.record_episode(reward)
 
             info.update({
                 "reward_breakdown": {

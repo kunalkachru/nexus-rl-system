@@ -14,10 +14,10 @@ def print_header(text):
     print(f"{'='*70}")
 
 def test_incidents_load():
-    """TEST 1: All 7 incidents load correctly"""
+    """TEST 1: All incidents load correctly"""
     print_header("TEST 1: All Incidents Load")
 
-    assert len(INCIDENT_LIBRARY) == 7, f"Expected 7 incidents, got {len(INCIDENT_LIBRARY)}"
+    assert len(INCIDENT_LIBRARY) == 8, f"Expected 8 incidents, got {len(INCIDENT_LIBRARY)}"
 
     for inc_id, incident in INCIDENT_LIBRARY.items():
         assert incident.case_id == inc_id
@@ -26,7 +26,7 @@ def test_incidents_load():
         assert len(incident.correct_mitigation_steps) > 0
         print(f"✅ {inc_id}: {incident.title} ({incident.difficulty})")
 
-    print(f"\n✅ PASSED: All 7 incidents loaded successfully")
+    print(f"\n✅ PASSED: All {len(INCIDENT_LIBRARY)} incidents loaded successfully")
 
 def test_reset_endpoint():
     """TEST 2: /reset endpoint returns proper observation"""
@@ -226,6 +226,38 @@ def test_schema_version():
 
     print(f"\n✅ PASSED: Schema version correct")
 
+
+def test_inc008_reset_smoke():
+    """TEST 8: INC008 loads — Theme 3.2 personalized / EA track."""
+    print_header("TEST 8: INC008 Reset (Theme 3.2)")
+
+    env = NexusEnvironment()
+    obs = env.reset(incident_id="INC008")
+    assert obs.get("incident_id") == "INC008", f"Expected INC008, got {obs.get('incident_id')}"
+    title = (obs.get("incident_title") or "").lower()
+    assert any(
+        kw in title for kw in ("concert", "board", "school", "executive", "ea")
+    ), f"Unexpected INC008 title: {obs.get('incident_title')}"
+    assert obs.get("phase") == "detection"
+    assert obs.get("step") == 0
+    print(f"✅ INC008 title: {obs.get('incident_title', '')[:72]}")
+    print(f"\n✅ PASSED: INC008 reset smoke (Theme 3.2)")
+
+
+def test_global_curriculum_status_shape():
+    """TEST 9: Global curriculum payload — Theme 4 (read-only, no reset)."""
+    print_header("TEST 9: Global Curriculum Status (Theme 4)")
+
+    from server import global_curriculum
+
+    st = global_curriculum.status()
+    assert "current_difficulty_tier" in st
+    assert "episodes_recorded" in st
+    assert "promote_threshold" in st
+    print(f"✅ Tier: {st['current_difficulty_tier']}, episodes in window: {st['episodes_recorded']}")
+    print(f"\n✅ PASSED: Curriculum status shape OK")
+
+
 def main():
     print("\n" + "🧪 NEXUS Enhanced — Local Regression Test Suite".center(70))
     print("Running comprehensive tests on local environment...\n")
@@ -238,6 +270,8 @@ def main():
         test_reward_calculation()
         test_all_incidents()
         test_schema_version()
+        test_inc008_reset_smoke()
+        test_global_curriculum_status_shape()
 
         print_header("✅ ALL TESTS PASSED")
         print("\n✅ Local environment is ready for deployment")

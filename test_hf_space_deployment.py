@@ -230,55 +230,86 @@ def test_html_dashboard(base_url):
         return False
 
 def test_full_episode(base_url):
-    """TEST 7: Full episode (detect → resolve)"""
-    print_header("TEST 7: Full Episode Execution")
+    """
+    TEST 7: Bounded full episode via POST /step until done, then scoped metrics.
+
+    Uses INC008 (max_steps=18 — smallest in the library). Proves the Space records
+    completions in /metrics and /learning-curve (unlike /demo/run, which does not
+    append to the server's episode ledger for these endpoints).
+    """
+    print_header("TEST 7: Full Episode (/step) + Metrics Recording")
+
+    run_id = "hf_smoke_step_completion"
 
     try:
-        # Reset
+        before_resp = requests.get(
+            f"{base_url}/metrics",
+            params={"run_id": run_id},
+            timeout=10,
+        )
+        assert before_resp.status_code == 200, before_resp.text
+        before = int(before_resp.json().get("episode_count") or 0)
+
         reset_resp = requests.post(
             f"{base_url}/reset",
-            json={"incident_id": "INC003"},
-            timeout=10
+            json={"incident_id": "INC008", "run_id": run_id},
+            timeout=10,
         )
-        assert reset_resp.status_code == 200
+        assert reset_resp.status_code == 200, reset_resp.text
         session_id = reset_resp.json()["session_id"]
 
-        # Run 20 steps
-        actions = []
-        for step_num in range(20):
-            action = {
-                "situation_assessment": f"Step {step_num}: investigating memory issue",
-                "hypothesis": "Memory leak in cache",
-                "resolution_confidence": 0.85 if step_num > 18 else 0.0,
-                "l1_directive": {
-                    "action": "send_notification",
-                    "parameters": {"customers": "affected_customers", "message": "Investigating", "severity": "high"},
-                    "reasoning": ""
-                },
-                "l2_directive": {"action": "check_all_alerts", "parameters": {}, "reasoning": ""},
-                "sre_directive": {"action": "list_runbooks", "parameters": {}, "reasoning": ""},
-                "pm_directive": {"action": "check_sla_status", "parameters": {}, "reasoning": ""},
-                "escalation_required": False,
-            }
+        minimal_action = {
+            "situation_assessment": "HF smoke: advancing episode until termination.",
+            "resolution_confidence": 0.0,
+        }
 
+        last = None
+        for step_num in range(24):
             step_resp = requests.post(
                 f"{base_url}/step/{session_id}",
-                json=action,
-                timeout=10
+                json=minimal_action,
+                timeout=15,
             )
-            assert step_resp.status_code == 200, f"Step {step_num} failed"
+            assert step_resp.status_code == 200, (
+                f"Step {step_num}: {step_resp.status_code} {step_resp.text}"
+            )
+            last = step_resp.json()
+            if last.get("done"):
+                break
 
-            data = step_resp.json()
-            if data.get("done"):
-                final_reward = data.get("reward", 0.0)
-                print(f"✅ Episode completed at step {step_num}")
-                print(f"✅ Final reward: {final_reward:.4f}")
-                print(f"✅ Final phase: {data['observation']['phase']}")
-                print(f"\n✅ PASSED: Full episode executed successfully")
-                return True
+        assert last is not None and last.get("done") is True, (
+            "Episode did not complete (expected max_steps termination on INC008)"
+        )
 
-        print(f"⚠️ Episode did not complete in 20 steps (still in {data['observation']['phase']})")
-        print(f"✅ PASSED: Episode advances correctly")
+        state_resp = requests.get(f"{base_url}/state/{session_id}", timeout=10)
+        assert state_resp.status_code == 200, state_resp.text
+        assert state_resp.json().get("done") is True
+
+        after_resp = requests.get(
+            f"{base_url}/metrics",
+            params={"run_id": run_id},
+            timeout=10,
+        )
+        assert after_resp.status_code == 200, after_resp.text
+        after = int(after_resp.json().get("episode_count") or 0)
+        assert after == before + 1, f"Expected episode_count {before + 1}, got {after}"
+
+        curve_resp = requests.get(
+            f"{base_url}/learning-curve",
+            params={"run_id": run_id},
+            timeout=10,
+        )
+        assert curve_resp.status_code == 200, curve_resp.text
+        curve = curve_resp.json()
+        assert int(curve.get("episode_count") or 0) >= 1
+        assert len(curve.get("rewards") or []) >= 1
+
+        obs = last.get("observation") or {}
+        print(f"✅ Episode completed at IC step {obs.get('step')}")
+        print(f"✅ Final phase: {obs.get('phase')}")
+        print(f"✅ Final reward: {last.get('reward', 0.0):.4f}")
+        print(f"✅ Scoped metrics episode_count: {before} → {after}")
+        print(f"\n✅ PASSED: /step completion recorded for metrics / learning-curve")
         return True
     except Exception as e:
         print(f"❌ FAILED: {e}")
@@ -304,6 +335,84 @@ def test_auto_demo_inc003(base_url):
         print(f"✅ Total steps: {data.get('total_steps')}")
         print(f"✅ Reward total: {data['reward_breakdown'].get('total')}")
         print(f"\n✅ PASSED: Auto-demo reaches completed episode")
+        return True
+    except Exception as e:
+        print(f"❌ FAILED: {e}")
+        return False
+
+
+def test_curriculum_endpoint(base_url):
+    """TEST 9: GET /curriculum — Theme 4 adaptive tier (shape; tier may vary on shared Spaces)."""
+    print_header("TEST 9: Curriculum Endpoint (Adaptive Tier)")
+
+    try:
+        resp = requests.get(f"{base_url}/curriculum", timeout=10)
+        assert resp.status_code == 200, f"Curriculum failed: {resp.status_code} {resp.text}"
+        data = resp.json()
+        for key in (
+            "current_difficulty_tier",
+            "promote_threshold",
+            "episodes_recorded",
+            "tier_index",
+            "last_rewards",
+        ):
+            assert key in data, f"Missing curriculum key: {key}"
+
+        print(f"✅ Tier: {data['current_difficulty_tier']}")
+        print(f"✅ Episodes recorded (global): {data['episodes_recorded']}")
+        print(f"✅ Promote threshold: {data['promote_threshold']}")
+        print(f"\n✅ PASSED: Curriculum endpoint returns expected shape")
+        return True
+    except Exception as e:
+        print(f"❌ FAILED: {e}")
+        return False
+
+
+def test_incidents_lists_inc008(base_url):
+    """TEST 10: GET /incidents includes INC008 (Theme 3.2)."""
+    print_header("TEST 10: Incidents List Includes INC008")
+
+    try:
+        resp = requests.get(f"{base_url}/incidents", timeout=10)
+        assert resp.status_code == 200, f"Incidents failed: {resp.status_code} {resp.text}"
+        data = resp.json()
+        assert "incidents" in data, "Missing incidents list"
+        ids = {item.get("case_id") for item in data["incidents"]}
+        assert "INC008" in ids, f"INC008 not in incident list: {sorted(ids)}"
+        inc8 = next(i for i in data["incidents"] if i.get("case_id") == "INC008")
+        assert inc8.get("difficulty") == "easy", f"INC008 difficulty: {inc8.get('difficulty')}"
+        print(f"✅ INC008 present: {inc8.get('title', '')[:60]}...")
+        print(f"\n✅ PASSED: Incidents API lists Theme 3.2 case")
+        return True
+    except Exception as e:
+        print(f"❌ FAILED: {e}")
+        return False
+
+
+def test_reset_inc008_smoke(base_url):
+    """TEST 11: POST /reset with incident_id INC008 returns valid observation."""
+    print_header("TEST 11: Reset Endpoint (INC008 Smoke)")
+
+    try:
+        resp = requests.post(
+            f"{base_url}/reset",
+            json={"incident_id": "INC008"},
+            timeout=10,
+        )
+        assert resp.status_code == 200, f"Reset INC008 failed: {resp.status_code} {resp.text}"
+        body = resp.json()
+        assert "session_id" in body and "observation" in body
+        obs = body["observation"]
+        assert obs.get("incident_id") == "INC008", f"Expected INC008, got {obs.get('incident_id')}"
+        title = (obs.get("incident_title") or "").lower()
+        assert "concert" in title or "board" in title or "ea" in title or "school" in title, (
+            f"Unexpected INC008 title: {obs.get('incident_title')}"
+        )
+        assert obs.get("phase") == "detection"
+        assert obs.get("step") == 0
+        print(f"✅ Session: {body['session_id'][:8]}...")
+        print(f"✅ Title: {obs.get('incident_title', '')[:70]}")
+        print(f"\n✅ PASSED: INC008 reset smoke successful")
         return True
     except Exception as e:
         print(f"❌ FAILED: {e}")
@@ -336,6 +445,9 @@ def main():
     results.append(("HTML Dashboard", test_html_dashboard(base_url)))
     results.append(("Full Episode", test_full_episode(base_url)))
     results.append(("Auto Demo INC003", test_auto_demo_inc003(base_url)))
+    results.append(("Curriculum Endpoint", test_curriculum_endpoint(base_url)))
+    results.append(("Incidents List INC008", test_incidents_lists_inc008(base_url)))
+    results.append(("Reset INC008 Smoke", test_reset_inc008_smoke(base_url)))
 
     # Summary
     print_header("TEST SUMMARY")

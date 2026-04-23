@@ -662,6 +662,89 @@ INC007 = IncidentCase(
 )
 
 # ---------------------------------------------------------------------------
+# INC008 — Executive EA: Conflicting Personal vs Work Commitments (Easy, Theme 3.2)
+# ---------------------------------------------------------------------------
+INC008 = IncidentCase(
+    case_id="INC008",
+    title="Executive EA Crisis: Board Prep vs First School Concert",
+    incident_type=IncidentType.PERSONAL_ASSISTANT,
+    severity=Severity.P3,
+    difficulty="easy",
+
+    initial_alerts=[
+        DatadogAlert("calendar-assistant", "double_booking_conflicts", 2, 1, is_red_herring=False),
+        DatadogAlert("exec-mobile", "push_notification_failures", 4, 1, is_red_herring=True),
+        DatadogAlert("travel-api", "flight_delay_probability", 0.12, 0.50, is_red_herring=True),
+    ],
+    initial_slack_messages=[
+        SlackMessage("#exec-ea", "pat.lee@acme.com", "2026-04-22T16:05:00Z",
+                     "Conflict: Board committee dry-run moved to 19:30 tonight; school concert is 19:00 — both marked accepted on exec calendar",
+                     is_key_signal=True),
+        SlackMessage("#exec-ea", "scheduling-bot", "2026-04-22T15:58:00Z",
+                     "Smart Scheduler auto-accepted both invites (confidence 0.94) — no human confirmation",
+                     is_key_signal=True),
+        SlackMessage("#family", "spouse-mobile", "2026-04-22T16:10:00Z",
+                     "Please tell me you can still make it — first solo tonight",
+                     is_key_signal=True),
+    ],
+    customer_reports=[
+        "Board chair expects refreshed risk slides before 20:00",
+        "School director notes soloists must arrive by 18:45 for sound check",
+    ],
+    affected_services=["calendar-assistant", "exec-mobile"],
+    affected_regions=["us-east-1"],
+
+    root_cause="Smart scheduling assistant auto-accepted overlapping invites without executive confirmation, creating an impossible double-booking",
+    root_cause_service="calendar-assistant",
+    correct_mitigation_steps=["acknowledge_conflict", "notify_board_chair", "delegate_slide_review", "release_one_commitment", "confirm_family_ack"],
+    correct_escalation_path=["l1_support", "incident_commander"],
+
+    blast_radius={
+        "users_affected": 12,
+        "revenue_per_minute": 0,
+        "slas_breached": ["exec-availability-slo"],
+    },
+
+    cascade_tree={},
+    red_herrings=["travel-api-flight-delay", "exec-mobile-push"],
+    masked_signals=["Auto-accept policy enabled last sprint for 'trusted internal meetings'"],
+
+    available_runbooks=[
+        RunbookStep("rb_ack_conflict", "Acknowledge calendar conflict",
+                    "Document both commitments and blast radius (family + board)",
+                    "Conflict logged with timestamps",
+                    True, None, True),
+        RunbookStep("rb_notify_board", "Notify board chair of delay risk",
+                    "Proactive Slack + status page update for committee dry-run",
+                    "Chair acknowledges revised timeline",
+                    True, "rb_ack_conflict", True),
+        RunbookStep("rb_delegate_slides", "Delegate slide refresh to Chief of Staff",
+                    "Hand off deck merge and risk appendix updates",
+                    "CoS confirms pickup within 45 minutes",
+                    True, "rb_notify_board", True),
+        RunbookStep("rb_release_slot", "Release one calendar commitment",
+                    "Decline or reschedule the lower-priority block with stakeholder messaging",
+                    "Only one hard commitment remains on calendar",
+                    True, "rb_delegate_slides", True),
+        RunbookStep("rb_family_ack", "Confirm family / school expectations",
+                    "Send clear arrival plan or coverage to spouse and school thread",
+                    "Family thread shows acknowledgment",
+                    True, "rb_release_slot", True),
+    ],
+
+    competing_hypotheses=[],
+    correct_hypothesis_keywords=["calendar", "auto-accept", "double", "overlap", "smart scheduler", "conflict"],
+    expert_review_criteria_set="communication",
+
+    schema_drift_step=None,
+    schema_version="v1.0",
+    optimal_mttr_minutes=25,
+    baseline_mttr_minutes=55,
+    max_steps=18,
+    revenue_per_minute=0,
+)
+
+# ---------------------------------------------------------------------------
 # Registry
 # ---------------------------------------------------------------------------
 INCIDENT_LIBRARY: Dict[str, IncidentCase] = {
@@ -672,6 +755,7 @@ INCIDENT_LIBRARY: Dict[str, IncidentCase] = {
     "INC005": INC005,
     "INC006": INC006,
     "INC007": INC007,
+    "INC008": INC008,
 }
 
 DIFFICULTY_ORDER = ["easy", "medium", "hard", "very_hard", "nightmare"]

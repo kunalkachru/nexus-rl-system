@@ -1,10 +1,8 @@
 """
 DifficultyAdapter — Theme 4 self-improvement mechanic.
 
-Tracks agent performance across episodes and promotes to harder incidents
-when average reward exceeds thresholds:
-  > 0.55 average over last 5 episodes → promote to next difficulty tier
-  > 0.65 average over last 5 episodes → generate a harder variant of current incident
+Tracks agent performance and promotes to harder incidents when average reward
+exceeds thresholds (see server.global_curriculum for cross-session persistence).
 
 Incident selection:
 - If no explicit incident_id in config: select randomly from current difficulty tier
@@ -15,24 +13,33 @@ import random
 from typing import List, Optional, Dict
 from server.data_models import EpisodeConfig, IncidentCase
 from server.incidents import INCIDENT_LIBRARY, DIFFICULTY_ORDER, get_incidents_by_difficulty
+from server import global_curriculum
 
 
-PROMOTE_THRESHOLD = 0.55  # avg reward over 5 episodes → advance difficulty
+PROMOTE_THRESHOLD = 0.55  # avg reward over 5 episodes → advance difficulty (mirrors global)
 VARIANT_THRESHOLD = 0.65  # avg reward over 5 episodes → generate harder variant
 
 
 class DifficultyAdapter:
     """Tracks performance and manages difficulty progression."""
 
-    def __init__(self, starting_difficulty: str = "easy"):
-        self.current_difficulty = starting_difficulty
+    def __init__(self, starting_difficulty: Optional[str] = None):
+        # None = follow process-wide adaptive tier (HTTP / Colab multi-episode)
+        self.current_difficulty = (
+            starting_difficulty
+            if starting_difficulty is not None
+            else global_curriculum.get_current_tier()
+        )
         self._episode_rewards: List[float] = []
         self._episode_count = 0
 
-    def record_episode(self, reward: float):
-        """Record completed episode reward. Trigger difficulty adjustment if warranted."""
+    def record_episode(self, reward: float) -> Optional[str]:
+        """Record reward; sync tier from global curriculum. Returns new tier name if promoted."""
         self._episode_rewards.append(reward)
         self._episode_count += 1
+        promoted = global_curriculum.record_episode_reward(reward)
+        self.current_difficulty = global_curriculum.get_current_tier()
+        return promoted
 
     def _recent_avg(self, n: int = 5) -> Optional[float]:
         recent = self._episode_rewards[-n:]
@@ -52,14 +59,7 @@ class DifficultyAdapter:
         return avg is not None and avg >= VARIANT_THRESHOLD
 
     def maybe_advance(self) -> Optional[str]:
-        """
-        Check if difficulty should advance. Returns new difficulty if advanced, else None.
-        Call after record_episode().
-        """
-        if self.should_promote():
-            current_idx = DIFFICULTY_ORDER.index(self.current_difficulty)
-            self.current_difficulty = DIFFICULTY_ORDER[current_idx + 1]
-            return self.current_difficulty
+        """Legacy hook; promotion is applied inside record_episode()."""
         return None
 
     def select_incident(self, config: EpisodeConfig) -> IncidentCase:

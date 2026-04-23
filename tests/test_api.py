@@ -3,6 +3,7 @@
 import pytest
 from fastapi.testclient import TestClient
 from server.app import app
+from server.incidents import get_incident
 
 client = TestClient(app)
 
@@ -24,6 +25,16 @@ class TestHealthEndpoint:
     def test_health_tracks_active_sessions(self):
         resp = client.get("/health")
         assert "active_sessions" in resp.json()
+
+
+class TestCurriculumEndpoint:
+    def test_curriculum_returns_200(self):
+        resp = client.get("/curriculum")
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["current_difficulty_tier"] == "easy"
+        assert "promote_threshold" in data
+        assert "recent_avg_reward" in data
 
 
 class TestOpenEnvContractStubs:
@@ -161,11 +172,11 @@ class TestStateEndpoint:
 
 
 class TestIncidentsEndpoint:
-    def test_incidents_returns_all_seven(self):
+    def test_incidents_returns_all_registered(self):
         resp = client.get("/incidents")
         assert resp.status_code == 200
         data = resp.json()
-        assert len(data["incidents"]) == 7
+        assert len(data["incidents"]) == 8
 
     def test_incidents_detail_returns_200(self):
         resp = client.get("/incidents/INC001")
@@ -276,3 +287,50 @@ class TestFullEpisodeFlow:
         rb = reward_resp.json()
         assert "total" in rb
         assert rb["total"] >= 0.0
+
+    def test_step_until_done_records_episode_for_metrics(self):
+        """
+        Full episode via POST /step (not /demo/run) must append completion so
+        /metrics and /learning-curve episode_count reflect real training traffic.
+        INC008 has the smallest max_steps (18) in the library for a bounded loop.
+        """
+        before = client.get("/metrics").json()["episode_count"]
+
+        reset_resp = client.post(
+            "/reset",
+            json={"incident_id": "INC008", "run_id": "pytest_full_episode_metrics"},
+        )
+        assert reset_resp.status_code == 200
+        sid = reset_resp.json()["session_id"]
+        cap = get_incident("INC008").max_steps + 5
+
+        minimal_action = {
+            "situation_assessment": "Test harness: advancing episode until termination.",
+            "resolution_confidence": 0.0,
+        }
+
+        last_done = False
+        for _ in range(cap):
+            step_resp = client.post(f"/step/{sid}", json=minimal_action)
+            assert step_resp.status_code == 200, step_resp.text
+            body = step_resp.json()
+            last_done = body.get("done") is True
+            if last_done:
+                break
+
+        assert last_done is True
+        state = client.get(f"/state/{sid}").json()
+        assert state["done"] is True
+
+        assert client.get("/metrics").json()["episode_count"] == before + 1
+
+        scoped = client.get(
+            "/metrics", params={"run_id": "pytest_full_episode_metrics"}
+        ).json()
+        assert scoped["episode_count"] >= 1
+
+        curve = client.get(
+            "/learning-curve", params={"run_id": "pytest_full_episode_metrics"}
+        ).json()
+        assert curve.get("episode_count", 0) >= 1
+        assert len(curve.get("rewards", [])) >= 1

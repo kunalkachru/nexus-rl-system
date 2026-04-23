@@ -1,15 +1,24 @@
-"""Tests for incident library — all 7 cases load with valid required fields."""
+"""Tests for incident library — all cases load with valid required fields."""
 
 import pytest
 from server.incidents import INCIDENT_LIBRARY, get_incident, get_incidents_by_difficulty
 from server.data_models import IncidentCase, Severity
 
 
-ALL_CASE_IDS = ["INC001", "INC002", "INC003", "INC004", "INC005", "INC006", "INC007"]
+ALL_CASE_IDS = [
+    "INC001",
+    "INC002",
+    "INC003",
+    "INC004",
+    "INC005",
+    "INC006",
+    "INC007",
+    "INC008",
+]
 
 
 class TestIncidentLibrary:
-    def test_all_seven_incidents_present(self):
+    def test_all_incidents_present(self):
         assert set(INCIDENT_LIBRARY.keys()) == set(ALL_CASE_IDS)
 
     def test_get_incident_returns_correct_type(self):
@@ -50,6 +59,13 @@ class TestIncidentLibrary:
 
 
 class TestIncidentContent:
+    def test_inc008_is_theme_32_personal_easy(self):
+        inc = get_incident("INC008")
+        assert inc.difficulty == "easy"
+        from server.data_models import IncidentType
+
+        assert inc.incident_type == IncidentType.PERSONAL_ASSISTANT
+
     def test_inc001_is_easy_p1(self):
         inc = get_incident("INC001")
         assert inc.difficulty == "easy"
@@ -73,7 +89,9 @@ class TestIncidentContent:
         assert 15 <= inc.schema_drift_step <= 25
 
     def test_non_nightmare_no_schema_drift(self):
-        for case_id in ["INC001", "INC002", "INC003"]:
+        for case_id in ALL_CASE_IDS:
+            if case_id == "INC007":
+                continue
             inc = get_incident(case_id)
             assert inc.schema_drift_step is None, f"{case_id} should not have schema drift"
 
