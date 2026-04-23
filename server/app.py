@@ -21,20 +21,23 @@ Endpoints:
   GET    /state                    — OpenAPI contract stub (use /state/{session_id} for data)
   POST   /mcp                      — OpenEnv JSON-RPC stub
   GET    /metrics                  — training metrics summary
+  GET    /curriculum               — Theme 4 adaptive difficulty (rolling rewards, cross-session)
 """
 
 import time
 import json
 import pathlib
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, List
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
 from server.environment import NexusEnvironment
 from server.incidents import INCIDENT_LIBRARY
 from server.reward import compute_total_reward
+from server import global_curriculum
 
 # Persistent storage for training data
 REWARDS_FILE = pathlib.Path("episode_rewards.json")
@@ -52,8 +55,18 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Static Colab training exports for metrics dashboard (JSON + PNG; see scripts/sync_training_runs_web.py)
+_training_runs_dir = pathlib.Path(__file__).parent.parent / "web" / "training_runs"
+if _training_runs_dir.is_dir():
+    app.mount(
+        "/training-runs-data",
+        StaticFiles(directory=str(_training_runs_dir)),
+        name="training_runs_data",
+    )
+
 # Session store — server-side external state (Theme 2)
 _sessions: Dict[str, NexusEnvironment] = {}
+_session_run_ids: Dict[str, str] = {}
 _episode_rewards: list = []  # For /metrics and /learning-curve (all completed episodes)
 _all_episodes: list = []  # ALL episodes (for progress tracking)
 _total_steps: int = 0  # Track EVERY step call (real-time progress)
@@ -66,14 +79,36 @@ def load_episode_rewards():
             with open(REWARDS_FILE, 'r') as f:
                 data = json.load(f)
                 if isinstance(data, list):
-                    _episode_rewards = data
+                    if not data:
+                        _episode_rewards = []
+                        _all_episodes = []
+                    elif isinstance(data[0], dict):
+                        # New format: full episode records used by /metrics and /learning-curve.
+                        _all_episodes = data
+                        _episode_rewards = [float(rec.get("reward", 0.0)) for rec in data]
+                    else:
+                        # Legacy format: plain reward list. Hydrate synthetic records for compatibility.
+                        _episode_rewards = [float(x) for x in data]
+                        _all_episodes = [
+                            {
+                                "session_id": f"legacy-{i}",
+                                "run_id": "default",
+                                "incident_id": "unknown",
+                                "difficulty": "unknown",
+                                "reward": r,
+                                "timestamp": 0.0,
+                            }
+                            for i, r in enumerate(_episode_rewards, start=1)
+                        ]
         except:
             _episode_rewards = []
+            _all_episodes = []
 
 def save_episode_rewards():
     try:
         with open(REWARDS_FILE, 'w') as f:
-            json.dump(_episode_rewards, f)
+            # Persist full episode records so /metrics + /learning-curve survive restarts.
+            json.dump(_all_episodes, f)
     except:
         pass
 
@@ -91,6 +126,7 @@ class ResetRequest(BaseModel):
     seed: Optional[int] = None
     session_id: Optional[str] = None
     expert_criteria: Optional[str] = None
+    run_id: Optional[str] = None
 
 
 class StepRequest(BaseModel):
@@ -203,7 +239,9 @@ def reset(request: ResetRequest):
     )
     session_id = env.current_state.session_id
     _sessions[session_id] = env
-    return {"session_id": session_id, "observation": obs}
+    run_id = _normalize_run_id(request.run_id)
+    _session_run_ids[session_id] = run_id
+    return {"session_id": session_id, "run_id": run_id, "observation": obs}
 
 
 @app.post("/step/{session_id}")
@@ -219,9 +257,13 @@ def step(session_id: str, request: StepRequest):
     _total_steps += 1
 
     if done:
+        run_id = _session_run_ids.get(session_id, "default")
         # Track ALL episodes (even zero-reward) for progress
         _all_episodes.append({
             "session_id": session_id,
+            "run_id": run_id,
+            "incident_id": env.current_state.incident.case_id,
+            "difficulty": env.current_state.incident.difficulty,
             "reward": reward,
             "timestamp": time.time()
         })
@@ -405,10 +447,14 @@ def get_tool_status(session_id: str):
 
 
 @app.get("/metrics")
-def get_metrics():
+def get_metrics(run_id: Optional[str] = None):
     """Training metrics summary — reward curves for demo and web UI."""
+    run_key = _normalize_run_id_filter(run_id)
+    scoped_records = _get_records_for_run(run_key)
+    scoped_rewards = [float(rec.get("reward", 0.0)) for rec in scoped_records]
+
     baseline_reward = 0.265
-    avg_reward = (sum(_episode_rewards) / len(_episode_rewards)) if _episode_rewards else None
+    avg_reward = (sum(scoped_rewards) / len(scoped_rewards)) if scoped_rewards else None
     improvement_delta = (avg_reward - baseline_reward) if avg_reward is not None else None
     improvement_pct = (
         (improvement_delta / baseline_reward) * 100
@@ -416,39 +462,46 @@ def get_metrics():
         else None
     )
 
-    successful_episodes = sum(1 for r in _episode_rewards if r > 0)
+    successful_episodes = sum(1 for r in scoped_rewards if r > 0)
+    total_episodes = len(scoped_records)
 
     return {
-        "episode_count": len(_episode_rewards),  # Completed episodes recorded in reward history
-        "total_episodes": len(_all_episodes),    # ALL episodes (including 0-reward)
-        "rewards": _episode_rewards[-50:],
+        "run_id": run_key or "all",
+        "episode_count": len(scoped_rewards),  # Completed episodes recorded in reward history
+        "total_episodes": total_episodes,      # ALL episodes for this run scope
+        "rewards": scoped_rewards[-50:],
         "avg_reward": round(avg_reward, 4) if avg_reward is not None else None,
-        "best_reward": round(max(_episode_rewards), 4) if _episode_rewards else None,
+        "best_reward": round(max(scoped_rewards), 4) if scoped_rewards else None,
         "recent_avg": round(
-            sum(_episode_rewards[-5:]) / min(5, len(_episode_rewards)), 4
-        ) if _episode_rewards else None,
+            sum(scoped_rewards[-5:]) / min(5, len(scoped_rewards)), 4
+        ) if scoped_rewards else None,
         "baseline_reward": baseline_reward,
         "improvement_delta": round(improvement_delta, 4) if improvement_delta is not None else None,
         "improvement_pct": round(improvement_pct, 1) if improvement_pct is not None else None,
         "improvement": f"{improvement_pct:.1f}%" if improvement_pct is not None else "0.0%",
         "training_progress": {
             "total_steps": _total_steps,         # EVERY API call logged in real-time
-            "total_runs": len(_all_episodes),
+            "total_runs": total_episodes,
             "successful_episodes": successful_episodes,
-            "success_rate": round(successful_episodes / len(_all_episodes) * 100, 1) if _all_episodes else 0,
+            "success_rate": round(successful_episodes / total_episodes * 100, 1) if total_episodes else 0,
         }
     }
 
 
 @app.get("/history")
-def get_history():
+def get_history(run_id: Optional[str] = None):
     """Episode history — all completed sessions with reward breakdown."""
+    run_key = _normalize_run_id_filter(run_id)
     completed = []
     for sid, env in _sessions.items():
         state = env.current_state
+        session_run_id = _session_run_ids.get(sid, "default")
+        if run_key and session_run_id != run_key:
+            continue
         if state.done and state.reward_breakdown:
             completed.append({
                 "session_id": sid,
+                "run_id": session_run_id,
                 "incident_id": state.incident.case_id,
                 "difficulty": state.incident.difficulty,
                 "expert_criteria": state.expert_criteria,
@@ -462,42 +515,50 @@ def get_history():
                     1 for f in state.oversight_findings if f.finding_type == "VIOLATION"
                 ),
             })
-    return {"episodes": len(completed), "history": completed}
+    return {"run_id": run_key or "all", "episodes": len(completed), "history": completed}
 
 
 @app.get("/episodes")
-def get_episodes():
+def get_episodes(run_id: Optional[str] = None):
     """
     Backward-compatible alias used by older dashboard code.
     Returns a lightweight view sorted by most recent completion.
     """
+    run_key = _normalize_run_id_filter(run_id)
     completed = []
     for sid, env in _sessions.items():
         state = env.current_state
+        session_run_id = _session_run_ids.get(sid, "default")
+        if run_key and session_run_id != run_key:
+            continue
         if state.done:
             completed.append({
                 "session_id": sid,
+                "run_id": session_run_id,
                 "incident": state.incident.case_id,
                 "reward": state.reward_breakdown.total if state.reward_breakdown else 0.0,
                 "done": state.done,
             })
 
     completed.sort(key=lambda item: item["session_id"], reverse=True)
-    return {"episodes": completed}
+    return {"run_id": run_key or "all", "episodes": completed}
 
 
 @app.get("/learning-curve")
-def get_learning_curve():
+def get_learning_curve(run_id: Optional[str] = None):
     """Rolling reward average — for Criterion 3 observable improvement evidence."""
-    if not _episode_rewards:
+    run_key = _normalize_run_id_filter(run_id)
+    scoped_records = _get_records_for_run(run_key)
+    rewards = [float(rec.get("reward", 0.0)) for rec in scoped_records]
+    if not rewards:
         return {"rewards": [], "rolling_avg": [], "baseline": 0.265}
-    rewards = _episode_rewards
     window = 5
     rolling = [
         round(sum(rewards[max(0, i - window):i + 1]) / min(i + 1, window), 4)
         for i in range(len(rewards))
     ]
     return {
+        "run_id": run_key or "all",
         "rewards": rewards,
         "rolling_avg": rolling,
         "baseline": 0.265,  # Pre-event scripted baseline avg (BRD Criterion 3)
@@ -508,15 +569,19 @@ def get_learning_curve():
 
 
 @app.get("/training-metrics")
-def get_training_metrics():
+def get_training_metrics(run_id: Optional[str] = None):
     """
     Comprehensive ML training metrics for the metrics dashboard.
     Includes reward curves, dimension breakdown, difficulty distribution, convergence data.
     """
-    if not _episode_rewards:
+    run_key = _normalize_run_id_filter(run_id)
+    scoped_records = _get_records_for_run(run_key)
+    scoped_rewards = [float(rec.get("reward", 0.0)) for rec in scoped_records]
+
+    if not scoped_rewards:
         rewards = []
     else:
-        rewards = _episode_rewards
+        rewards = scoped_rewards
 
     # Load pre-event training artifacts if available
     try:
@@ -594,6 +659,7 @@ def get_training_metrics():
     trained_steps = max(18, 45 - int(len(rewards) * 0.5)) if rewards else 45  # Improve over time
 
     return {
+        "run_id": run_key or "all",
         "episode_count": len(rewards),
         "rewards": [round(r, 4) for r in rewards],
         "best_reward": round(best_reward, 4),
@@ -605,6 +671,38 @@ def get_training_metrics():
         "baseline": baseline_data,
         "trained": {"reward": round(trained_reward, 4), "steps": trained_steps},
     }
+
+
+@app.get("/runs")
+def list_runs():
+    """List observed run IDs with episode counts for scoped metrics views."""
+    run_counts: Dict[str, int] = {}
+    for rec in _all_episodes:
+        rid = str(rec.get("run_id") or "default")
+        run_counts[rid] = run_counts.get(rid, 0) + 1
+
+    for session_id in _sessions.keys():
+        rid = _session_run_ids.get(session_id, "default")
+        run_counts.setdefault(rid, 0)
+
+    runs = [
+        {"run_id": run_id, "episode_count": count}
+        for run_id, count in sorted(run_counts.items(), key=lambda item: item[0])
+    ]
+    return {
+        "default_run_id": "default",
+        "runs": runs,
+        "total_runs": len(runs),
+    }
+
+
+@app.get("/curriculum")
+def get_adaptive_curriculum():
+    """
+    Theme 4 — process-wide adaptive difficulty (rolling last-N episode rewards).
+    Survives new HTTP sessions so Colab / multi-reset training sees real tier movement.
+    """
+    return global_curriculum.status()
 
 
 # ------------------------------------------------------------------
@@ -935,3 +1033,25 @@ def _get_env(session_id: str) -> NexusEnvironment:
     if session_id not in _sessions:
         raise HTTPException(status_code=404, detail=f"Session {session_id} not found")
     return _sessions[session_id]
+
+
+def _normalize_run_id(value: Optional[str]) -> str:
+    if value is None:
+        return "default"
+    cleaned = value.strip()
+    return cleaned if cleaned else "default"
+
+
+def _normalize_run_id_filter(value: Optional[str]) -> Optional[str]:
+    if value is None:
+        return None
+    cleaned = value.strip().lower()
+    if cleaned in {"", "all"}:
+        return None
+    return value.strip()
+
+
+def _get_records_for_run(run_id: Optional[str]) -> List[Dict[str, Any]]:
+    if run_id is None:
+        return _all_episodes
+    return [rec for rec in _all_episodes if str(rec.get("run_id") or "default") == run_id]
