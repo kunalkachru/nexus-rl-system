@@ -32,7 +32,9 @@ test_hf_space_deployment.py
 test_regression_local.py
 gate.sh
 
-notebooks
+notebooks/*
+!notebooks/grpo_colab_v2.ipynb
+!notebooks/grpo_colab_enhanced.ipynb
 training
 train.py
 training_simulator.py
