@@ -1,0 +1,8 @@
+{
+  "reason": "post_plots",
+  "BASE_URL": "https://kunalkachru23-nexus-enhanced-stage.hf.space",
+  "ONE_ROUND_TRAINING": false,
+  "MODEL_NAME": "unsloth/Qwen2.5-1.5B-Instruct",
+  "GRPO_OUTPUT_DIR": "./grpo_checkpoints",
+  "PLOT_OUTPUT_DIR": "/content"
+}

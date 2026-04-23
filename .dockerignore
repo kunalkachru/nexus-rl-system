@@ -45,10 +45,14 @@ docker-compose.yml
 
 # Ephemeral / generated data
 *.png
+!web/training_runs/**/*.png
 episode_rewards.json
 training_artifacts
 grpo_checkpoints
 wandb
+
+# Colab GRPO backups (large; evidence lives in GitHub, not Space image)
+NEXUS_GRPO_backups
 
 # Docs & meta (README stays for Hub project page)
 *.md

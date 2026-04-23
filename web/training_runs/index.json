@@ -1,0 +1,59 @@
+{
+  "schema_version": 1,
+  "runs": [
+    {
+      "id": "run_quick_20260422_025136Z",
+      "label": "Quick \u2014 quick_20260422_025136Z",
+      "export": "runs/run_quick_20260422_025136Z/export.json",
+      "plots": {
+        "training_analysis": "runs/run_quick_20260422_025136Z/training_analysis.png",
+        "reward_curves_hires": "runs/run_quick_20260422_025136Z/reward_curves_hires.png"
+      }
+    },
+    {
+      "id": "run_full_20260423_132748Z",
+      "label": "Full \u2014 full_20260423_132748Z",
+      "export": "runs/run_full_20260423_132748Z/export.json",
+      "plots": {
+        "training_analysis": "runs/run_full_20260423_132748Z/training_analysis.png",
+        "reward_curves_hires": "runs/run_full_20260423_132748Z/reward_curves_hires.png"
+      }
+    },
+    {
+      "id": "run_full_20260423_024104Z",
+      "label": "Full \u2014 full_20260423_024104Z",
+      "export": "runs/run_full_20260423_024104Z/export.json",
+      "plots": {
+        "training_analysis": "runs/run_full_20260423_024104Z/training_analysis.png",
+        "reward_curves_hires": "runs/run_full_20260423_024104Z/reward_curves_hires.png"
+      }
+    },
+    {
+      "id": "run_full_20260423_014555Z",
+      "label": "Full \u2014 full_20260423_014555Z",
+      "export": "runs/run_full_20260423_014555Z/export.json",
+      "plots": {
+        "training_analysis": "runs/run_full_20260423_014555Z/training_analysis.png",
+        "reward_curves_hires": "runs/run_full_20260423_014555Z/reward_curves_hires.png"
+      }
+    },
+    {
+      "id": "run_full_20260422_195227Z",
+      "label": "Full \u2014 full_20260422_195227Z",
+      "export": "runs/run_full_20260422_195227Z/export.json",
+      "plots": {
+        "training_analysis": "runs/run_full_20260422_195227Z/training_analysis.png",
+        "reward_curves_hires": "runs/run_full_20260422_195227Z/reward_curves_hires.png"
+      }
+    },
+    {
+      "id": "run_full_20260422_035257Z",
+      "label": "Full \u2014 full_20260422_035257Z",
+      "export": "runs/run_full_20260422_035257Z/export.json",
+      "plots": {
+        "training_analysis": "runs/run_full_20260422_035257Z/training_analysis.png",
+        "reward_curves_hires": "runs/run_full_20260422_035257Z/reward_curves_hires.png"
+      }
+    }
+  ]
+}

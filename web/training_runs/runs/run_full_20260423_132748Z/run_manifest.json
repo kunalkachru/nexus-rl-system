@@ -1,0 +1,21 @@
+{
+  "reason": "post_plots",
+  "notebook": "grpo_colab_enhanced",
+  "BASE_URL": "https://kunalkachru23-nexus-enhanced-stage.hf.space",
+  "GRPO_RUN_ID": "colab_all_incidents_run_20260427",
+  "TRAINING_INCIDENT_POOL": [
+    "INC001",
+    "INC002",
+    "INC003",
+    "INC004",
+    "INC005",
+    "INC006",
+    "INC007",
+    "INC008"
+  ],
+  "INCIDENT_ROTATION": "round_robin",
+  "ONE_ROUND_TRAINING": false,
+  "MODEL_NAME": "unsloth/Qwen2.5-1.5B-Instruct",
+  "GRPO_OUTPUT_DIR": "/content/drive/MyDrive/NEXUS_GRPO_backups/active_grpo_checkpoints",
+  "PLOT_OUTPUT_DIR": "/content"
+}

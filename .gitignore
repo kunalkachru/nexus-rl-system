@@ -52,12 +52,16 @@ uv.lock
 
 # --- Training / RL artifacts (regenerate locally) ---
 training_artifacts/pre_event_reward_curves.json
-grpo_checkpoints/
-**/grpo_checkpoints/**
+# Local training output at repo root only (not Colab backup checkpoints under NEXUS_GRPO_backups/)
+/grpo_checkpoints/
 wandb/
 episode_rewards.json
 *.png
 !docs/images/training_reward_curve.png
+!NEXUS_GRPO_backups/**/*.png
+!web/training_runs/**/*.png
+# Colab backup adapter weights are large; keep JSON/plots/config in git
+NEXUS_GRPO_backups/**/grpo_checkpoints/**/*.safetensors
 
 # --- HF / hub local caches ---
 .cache/

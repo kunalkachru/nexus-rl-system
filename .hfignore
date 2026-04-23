@@ -42,10 +42,13 @@ deploy_to_hf_spaces.py
 docker-compose.yml
 
 *.png
+!web/training_runs/**/*.png
 episode_rewards.json
 training_artifacts
 grpo_checkpoints
 wandb
+
+NEXUS_GRPO_backups
 
 *.md
 **/*.md
