@@ -8,6 +8,8 @@ NEXUS follows a staged difficulty pattern:
 
 1. **Easy/medium onboarding**
    - Build non-zero reward trajectories quickly.
+   - **INC008** (Theme 3.2 — executive EA calendar / family vs work conflict) sits in the **easy** training pool alongside INC001–INC002 (`train.py`, `training/train.py`, `training/grpo_train.py`) so policies see personalized delegation mechanics early.
+   - **Process-wide adaptive tier (Theme 4):** `server/global_curriculum.py` + **`GET /curriculum`** keep a rolling last-5 reward average across HTTP/Colab sessions so difficulty promotion is not lost when each request uses a new `NexusEnvironment()` (`server/difficulty.py` syncs tier from global state).
 2. **Hard scenario exposure**
    - Increase red herring pressure and coordination demands.
 3. **Nightmare stress testing (INC007)**
@@ -72,3 +74,13 @@ Observed directional outcomes:
   - coordinated multi-agent pattern: `0.70`
 
 Interpretation: core anti-shortcut controls are directionally aligned with intended operational behavior.
+
+## Regression coverage (curriculum-related)
+
+Run from repo root `nexus-enhanced/`:
+
+- `pytest tests/ -q` — unit/API tests including `test_global_curriculum.py`, INC008 incident tests, `GET /curriculum`.
+- `python test_regression_local.py` — narrative suite plus **INC008 reset smoke** and **global curriculum status shape**.
+- `python test_hf_space_deployment.py --url https://kunalkachru23-nexus-enhanced-stage.hf.space` — remote checks including **`/curriculum`**, **`/incidents`** (INC008 present), **`POST /reset`** with INC008.
+
+Shared Spaces may already have a non-`easy` curriculum tier; remote tests assert **response shape**, not a fixed tier value. **After a new deploy**, re-run `test_hf_space_deployment.py` against the Space URL: until the image includes `INC008` and `GET /curriculum`, the INC008 and curriculum checks will fail against an older build (expected mismatch).

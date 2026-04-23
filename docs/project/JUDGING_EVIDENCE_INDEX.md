@@ -1,6 +1,6 @@
 # NEXUS Enhanced — Judging Evidence Index
 
-Snapshot timestamp (UTC): `2026-04-22T13:58:09Z`  
+Snapshot timestamp (UTC): `2026-04-22T20:46:04Z`  
 Stage URL: `https://kunalkachru23-nexus-enhanced-stage.hf.space`
 
 ## Hard-gate evidence (BRD Section 17)
@@ -27,13 +27,20 @@ Stage URL: `https://kunalkachru23-nexus-enhanced-stage.hf.space`
 Source endpoints:
 - `GET /metrics`
 - `GET /learning-curve`
+- Optional scoped view: `GET /metrics?run_id=<run_id>` and `GET /learning-curve?run_id=<run_id>`
+- Run discovery endpoint: `GET /runs`
+
+Scope policy:
+- Canonical submission numbers use aggregate scope (`run_id=all` / no `run_id` query).
+- Run-scoped views are for internal debugging and diagnostics only.
+- If quoting run-scoped numbers in notes, include the explicit `run_id`.
 
 Snapshot values:
-- Episode count: `120`
-- Average reward: `0.4063`
+- Episode count: `360`
+- Average reward: `0.4339`
 - Best reward: `0.9484`
 - Baseline reward: `0.265`
-- Improvement: `+53.3%`
+- Improvement: `+63.7%`
 
 Visualization artifact:
 - `docs/images/training_reward_curve.png`
@@ -54,12 +61,16 @@ python scripts/export_submission_snapshot.py \
 
 This writes timestamped snapshot files under `docs/project/snapshots/`.
 
+Canonical demo-day snapshot set (stage URL only):
+- `docs/project/snapshots/submission_snapshot_20260422T204604Z.md`
+- `docs/project/snapshots/component_metrics_20260422T204604Z.md`
+
 ## Pipeline and deployment proof
 
 - Runtime entry: `start.sh` (FastAPI + Streamlit)
 - API host app: `server/app.py`
 - Full gate runner: `scripts/shell/gate.sh`
-- Remote regression suite: `test_hf_space_deployment.py` (8/8 expected)
+- Remote regression suite: `test_hf_space_deployment.py` (11/11 expected; includes `/curriculum`, INC008 via `/incidents` + reset smoke)
 
 ## Story/demo evidence pointers
 

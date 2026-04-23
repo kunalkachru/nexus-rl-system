@@ -7,6 +7,9 @@ Purpose: maintain a concise, judge-readable ledger showing what changed, why it 
 - One row per meaningful run or snapshot window.
 - Include both scalar outcomes and behavior observations.
 - Keep references to reproducible artifacts (snapshot files, endpoints, scripts).
+- Treat aggregate scope (no `run_id`) as the default for submission-facing evidence.
+- Use `run_id`-scoped endpoints only for diagnostics or experiment-specific analysis.
+- When using scoped metrics, record the exact `run_id` and endpoint query in the config note.
 
 ## Run ledger
 
@@ -18,6 +21,10 @@ Purpose: maintain a concise, judge-readable ledger showing what changed, why it 
 | 2026-04-22T17:08:25Z | Submission refresh | Refreshed submission snapshot after enhancement docs pass | Updated timestamped summary with stable canonical metrics set | Ready for pitch/video script alignment and final demo runbook | Re-freeze if further training runs change episode history | `docs/project/snapshots/submission_snapshot_20260422T170825Z.md` |
 | 2026-04-22T17:25:10Z | Compact ablation run | Executed deterministic reward-behavior micro-ablations | Evidence gating: 0.10 -> 0.50; customer gating: 0.30 -> 1.00; coordination noise: 0.45 -> 0.70 | Confirms anti-shortcut reward controls are directionally aligned | Controlled synthetic-state ablations; use with transcript evidence for final claims | `docs/project/snapshots/reward_ablation_20260422T172510Z.md` |
 | 2026-04-22T17:25:11Z | Snapshot refresh | Refreshed component and submission snapshots after behavior/reward updates | Canonical metrics remain stable for story sync | Evidence pack updated for final sign-off | Re-freeze once more if any late training updates occur | `docs/project/snapshots/submission_snapshot_20260422T172511Z.md` |
+| 2026-04-22T18:35:09Z | Demo-day canonical freeze (stage) | Locked single narrative source to stage URL only | Submission snapshot regenerated from stage with canonical metrics set | Prevents cross-URL drift between stage/prod narratives | If migrating to prod later, regenerate all linked snapshots in one pass | `docs/project/snapshots/submission_snapshot_20260422T183509Z.md` |
+| 2026-04-22T18:35:10Z | Component metrics canonical freeze (stage) | Refreshed component metrics from stage URL only | Component snapshot aligned to same stage freeze window | Keeps pitch/video and evidence index in sync | Treat as authoritative component snapshot for current demo day | `docs/project/snapshots/component_metrics_20260422T183510Z.md` |
+| 2026-04-22T20:46:04Z | Post-training canonical freeze (stage) | Colab training run completed; snapshots regenerated from stage only | Episodes 360, avg 0.4339, best 0.9484, +63.7% vs baseline 0.265 | Updated reward curve and snapshot set for final narrative lock | If any further training occurs, regenerate all docs-linked snapshot references together | `docs/project/snapshots/submission_snapshot_20260422T204604Z.md` |
+| 2026-04-22T20:46:04Z | Component metrics post-training freeze (stage) | Refreshed component metrics snapshot at same freeze time | Component metrics aligned to completed-training aggregate window | Keeps evidence index and recording script numerically consistent | Use same timestamp set for pitch/video and evidence docs | `docs/project/snapshots/component_metrics_20260422T204604Z.md` |
 
 ## Ongoing template (copy for future runs)
 

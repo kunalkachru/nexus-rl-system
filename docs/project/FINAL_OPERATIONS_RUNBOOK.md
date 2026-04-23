@@ -13,10 +13,11 @@ Purpose: deterministic final-day operations with explicit fallback paths and no 
 
 1. Validate local:
    - `pytest tests/ -q`
+   - `python test_regression_local.py` (incidents + INC008 + global curriculum smoke)
    - `openenv validate .`
 2. Validate remote:
    - `openenv validate --url https://kunalkachru23-nexus-enhanced-stage.hf.space`
-   - `python test_hf_space_deployment.py --url https://kunalkachru23-nexus-enhanced-stage.hf.space`
+   - `python test_hf_space_deployment.py --url https://kunalkachru23-nexus-enhanced-stage.hf.space` (includes `/curriculum`, `/incidents` INC008, reset INC008)
 3. Freeze fresh snapshots:
    - `python scripts/export_submission_snapshot.py --url https://kunalkachru23-nexus-enhanced-stage.hf.space`
    - `python scripts/export_component_metrics.py --url https://kunalkachru23-nexus-enhanced-stage.hf.space`
