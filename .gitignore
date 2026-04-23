@@ -55,7 +55,6 @@ training_artifacts/pre_event_reward_curves.json
 # Local training output at repo root only (not Colab backup checkpoints under NEXUS_GRPO_backups/)
 /grpo_checkpoints/
 wandb/
-episode_rewards.json
 *.png
 !docs/images/training_reward_curve.png
 !NEXUS_GRPO_backups/**/*.png

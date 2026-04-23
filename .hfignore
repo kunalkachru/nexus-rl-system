@@ -43,7 +43,6 @@ docker-compose.yml
 
 *.png
 !web/training_runs/**/*.png
-episode_rewards.json
 training_artifacts
 grpo_checkpoints
 wandb
