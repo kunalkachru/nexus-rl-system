@@ -1,5 +1,5 @@
 {
-  "description": "Untrained scripted baseline on INC003 \u2014 establishes reward floor for GRPO improvement (BRD Criterion 3)",
+  "description": "Untrained scripted baseline on INC003 \u2014 establishes reward floor for GRPO improvement (observable improvement evidence)",
   "incident_id": "INC003",
   "policy": "scripted_baseline",
   "n_trials": 5,

@@ -299,7 +299,7 @@ def compute_oversight_score(state: EpisodeState) -> float:
 def compute_depth_bonus(state: EpisodeState) -> float:
     """
     Mercor sub-theme: reward longer, better-structured IC reasoning.
-    UNCAPPED — per BRD Section 10.7: rewards scale with token output without ceiling.
+    UNCAPPED — per Mercor sub-theme: rewards scale with token output without ceiling.
 
     Calibration principle (per Mercor requirement):
     - Short canned strings (<30 words) earn 0 — they do not represent "reasoning"

@@ -306,7 +306,7 @@ class TestRewardSystemIntegration:
     """
     Integration tests that run realistic policies end-to-end.
     These catch calibration bugs that unit tests miss — e.g., a boilerplate
-    baseline scoring 1.0+ leaves no headroom to show training improvement (Criterion 3).
+    baseline scoring 1.0+ leaves no headroom to show training improvement (rubric: observable improvement).
     """
 
     def test_boilerplate_baseline_depth_is_zero(self):
@@ -323,7 +323,7 @@ class TestRewardSystemIntegration:
 
     def test_baseline_policy_total_reward_below_threshold(self):
         """
-        Scripted baseline must score < 0.5 so training improvement is observable (BRD Criterion 3).
+        Scripted baseline must score < 0.5 so training improvement is observable (hackathon rubric).
         If baseline is near 1.0, the trained model has nowhere to improve.
         """
         from server.environment import NexusEnvironment
@@ -339,7 +339,7 @@ class TestRewardSystemIntegration:
         rb = compute_total_reward(env.current_state)
         assert rb.total < 0.5, (
             f"Baseline policy scored {rb.total:.3f} — must be <0.5 to leave "
-            f"headroom for training improvement (BRD Criterion 3)"
+            f"headroom for training improvement (hackathon rubric)"
         )
 
     def test_rich_ic_assessment_earns_meaningful_depth(self):

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Export a reward-curve PNG for judge slides / BRD Criterion 3 (observable evidence).
+Export a reward-curve PNG for judge slides / observable training progress (hackathon rubric).
 
 Data sources (first match wins):
   1) --url: GET {url}/learning-curve (same JSON as the live dashboard)

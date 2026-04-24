@@ -48,7 +48,7 @@ openenv push . --repo-id kunalkachru23/nexus-enhanced-stage --exclude .hfignore
 4. Watch dashboard: https://kunalkachru23-nexus-enhanced-stage.hf.space/
 ```
 
-### Export reward plot for slides (BRD Criterion 3)
+### Export reward plot for slides (observable improvement evidence)
 ```bash
 python scripts/export_reward_plot.py --url https://kunalkachru23-nexus-enhanced-stage.hf.space
 # or from local episode_rewards.json:
@@ -188,7 +188,7 @@ python test_hf_space_deployment.py --url https://kunalkachru23-nexus-enhanced-st
 | Reward Progress | **20%** | Chart.js curves on dashboard ← **KEY** |
 | Pipeline | 10% | GRPO on Colab GPU → HF Space API |
 
-**🎯 Priority**: Ensure reward curves are visible and improving to maximize Criterion 3 score.
+**🎯 Priority**: Ensure reward curves are visible and improving to support the observable-improvement rubric row.
 
 ---
 

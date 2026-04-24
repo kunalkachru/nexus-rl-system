@@ -3,7 +3,7 @@
 Snapshot timestamp (UTC): `2026-04-24T16:48:26Z`  
 Stage URL: `https://kunalkachru23-nexus-enhanced-stage.hf.space`
 
-## Hard-gate evidence (BRD Section 17)
+## Mandatory compliance evidence (OpenEnv + submission artifacts)
 
 1. OpenEnv latest-release workflow in use
    - Local package validate: `openenv validate .`
@@ -20,9 +20,9 @@ Stage URL: `https://kunalkachru23-nexus-enhanced-stage.hf.space`
    - Owner action: publish final link and add URL to submission package.
 
 4. Compliance lock matrix
-   - BRD criterion and hard-gate mapping: `docs/project/COMPLIANCE_LOCK_MATRIX.md`
+   - Rubric and mandatory-requirement mapping: `docs/project/COMPLIANCE_LOCK_MATRIX.md`
 
-## Live metrics snapshot (Criterion 3 evidence)
+## Live metrics snapshot (observable improvement evidence)
 
 Source endpoints:
 - `GET /metrics`
@@ -78,7 +78,7 @@ Canonical demo-day snapshot set (stage URL only):
 - 2-minute live walkthrough: `docs/pitch/DEMO_WALKTHROUGH.md`
 - <2 minute recording script: `docs/pitch/YOUTUBE_RECORDING_SCRIPT.md`
 - Manual demo test cases: `docs/pitch/DEMO_MANUAL_TEST_CASES.md`
-- Criterion-4 behavior proof sheet: `docs/project/BEHAVIORAL_DELTA_PROOF.md`
+- Behavior delta proof sheet: `docs/project/BEHAVIORAL_DELTA_PROOF.md`
 - Sub-theme matrix: `docs/project/SUBTHEME_EVIDENCE_MATRIX.md`
 - Reward-hacking defense: `docs/project/REWARD_HACKING_DEFENSE.md`
 - Training audit ledger: `docs/project/TRAINING_AUDIT_LOG.md`

@@ -17,7 +17,7 @@ NEXUS follows a staged difficulty pattern:
 
 The environment and reward system are explicitly structured to support this progression (`server/environment.py`, `server/difficulty.py`, `server/incidents.py`).
 
-## Why this curriculum is valid for BRD + Self-Serve guidance
+## Why this curriculum is valid for hackathon compliance + Self-Serve guidance
 
 - Keeps success probability > 0 early (prevents RL stall).
 - Increases branching complexity only after stable basic policy behavior.

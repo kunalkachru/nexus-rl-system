@@ -29,7 +29,7 @@ Use this section first during judging/review.
 - **Live environment (HF Space):** https://kunalkachru23-nexus-enhanced-stage.hf.space/
 - **3-minute pitch script:** [`docs/pitch/PITCH.md`](docs/pitch/PITCH.md)
 - **2-minute demo walkthrough:** [`docs/pitch/DEMO_WALKTHROUGH.md`](docs/pitch/DEMO_WALKTHROUGH.md)
-- **Hard-gate + rubric evidence index:** [`docs/project/JUDGING_EVIDENCE_INDEX.md`](docs/project/JUDGING_EVIDENCE_INDEX.md)
+- **Compliance + judging evidence index:** [`docs/project/JUDGING_EVIDENCE_INDEX.md`](docs/project/JUDGING_EVIDENCE_INDEX.md)
 - **Behavioral delta (before vs after):** [`docs/project/BEHAVIORAL_DELTA_PROOF.md`](docs/project/BEHAVIORAL_DELTA_PROOF.md)
 - **Compliance lock matrix:** [`docs/project/COMPLIANCE_LOCK_MATRIX.md`](docs/project/COMPLIANCE_LOCK_MATRIX.md)
 - **HF blog draft (publish-ready):** [`docs/blog/blog_post_hf.md`](docs/blog/blog_post_hf.md)
@@ -138,9 +138,9 @@ python scripts/export_reward_plot.py \
 
 Caption: blue line is per-episode reward, green is rolling average, red dashed line is baseline (`0.265`).
 
-## BRD hard gate — OpenEnv (reproduce)
+## OpenEnv (reproduce)
 
-Per [`../design/hackathon_brd.md`](../design/hackathon_brd.md) Section 17, judges expect **OpenEnv (latest release)** usage, not only a custom HTTP server.
+Per **hackathon compliance criteria**, the submission uses **OpenEnv (latest release)** in the toolchain—not only a custom HTTP server. Reproduce validation with the commands below.
 
 **Local (dev machine, after `pip install "openenv>=0.2.3"`):**
 
@@ -162,7 +162,7 @@ openenv validate --url https://kunalkachru23-nexus-enhanced-stage.hf.space
 
 **Deploying with OpenEnv:** use `openenv push . --repo-id <user>/<space> --exclude .hfignore` (or **`./gate.sh --push`**, which adds `--exclude` for you). OpenEnv does not load `.hfignore` unless you pass it via `--exclude`; omitting it does **not** break the build, it only uploads extra paths (less lean). See `docs/guides/QUICK_START.md` for a short rationale.
 
-`requirements.txt` **omits** `openenv` on the Space Docker image to keep builds reliable; the **Colab notebook** installs `openenv>=0.2.3` for the training hard gate. Contract-only routes (`/metadata`, `/schema`, `GET /state`, `POST /mcp`) satisfy `openenv validate --url`; episode logic uses **`/reset`**, **`/step/{session_id}`**, **`/state/{session_id}`** only.
+`requirements.txt` **omits** `openenv` on the Space Docker image to keep builds reliable; the **Colab notebook** installs `openenv>=0.2.3` to satisfy the **Colab + OpenEnv** portion of compliance. Contract-only routes (`/metadata`, `/schema`, `GET /state`, `POST /mcp`) satisfy `openenv validate --url`; episode logic uses **`/reset`**, **`/step/{session_id}`**, **`/state/{session_id}`** only.
 
 ## API Endpoints
 
@@ -191,15 +191,15 @@ openenv validate --url https://kunalkachru23-nexus-enhanced-stage.hf.space
 - **Snorkel AI** — Rotating expert review board (4 criteria)
 - **Patronus AI** — Live schema drift in INC007 at step 18
 
-## Pitch, plan, and BRD evidence
+## Pitch, plan, and compliance evidence
 
 Documentation lives under [`docs/`](docs/) (guides, deployment, project status, pitch/demo scripts, blog drafts).
 
-- **[`docs/pitch/PITCH.md`](docs/pitch/PITCH.md)** — 3-minute spoken script + 2-minute Q&A bullets (BRD §18.1).
-- **[`docs/project/PLAN_OF_ACTION.md`](docs/project/PLAN_OF_ACTION.md)** — BRD compliance matrix + prioritized todo table.
-- **`scripts/export_reward_plot.py`** — export reward curve PNG from `--url` or `episode_rewards.json` (Criterion 3 slides). Canonical chart (tracked in git): **`docs/images/training_reward_curve.png`** (see section above).
+- **[`docs/pitch/PITCH.md`](docs/pitch/PITCH.md)** — 3-minute spoken script + 2-minute Q&A bullets (organizer pitch format).
+- **[`docs/project/PLAN_OF_ACTION.md`](docs/project/PLAN_OF_ACTION.md)** — hackathon compliance matrix + prioritized todo table.
+- **`scripts/export_reward_plot.py`** — export reward curve PNG from `--url` or `episode_rewards.json` (slides / observable improvement evidence). Canonical chart (tracked in git): **`docs/images/training_reward_curve.png`** (see section above).
 
-## Final submission checklist (hard-gate safe)
+## Final submission checklist (compliance-ready)
 
 - [ ] Space URL is live and included in final form: `https://kunalkachru23-nexus-enhanced-stage.hf.space/`
 - [ ] `openenv validate .` passes locally.
@@ -215,7 +215,7 @@ Documentation lives under [`docs/`](docs/) (guides, deployment, project status, 
 
 ## Blog Post
 
-See [`docs/blog/blog_post_hf.md`](docs/blog/blog_post_hf.md) for the publish-ready HuggingFace blog draft (includes reward model deep-dive, training methodology, and demo walkthrough). Publish and add the public URL for BRD §17.3.
+See [`docs/blog/blog_post_hf.md`](docs/blog/blog_post_hf.md) for the publish-ready HuggingFace blog draft (includes reward model deep-dive, training methodology, and demo walkthrough). Publish and add the public URL to your submission package (blog or short video, per organizer requirements).
 
 ## Team
 

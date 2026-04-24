@@ -1,7 +1,7 @@
-# NEXUS Enhanced — 3-minute pitch + 2-minute Q&A (BRD §18.1)
+# NEXUS Enhanced — 3-minute pitch + 2-minute Q&A
 
 **Event:** Meta PyTorch OpenEnv Hackathon × Scaler — Grand Finale  
-**Format (verbatim BRD):** 3 min pitch + 2 min Q&A = 5 min total.
+**Format (per hackathon compliance):** 3 min pitch + 2 min Q&A = 5 min total.
 
 ---
 
@@ -29,7 +29,7 @@
 
 ---
 
-## Observable evidence (~35 s) — Criterion 3
+## Observable evidence (~35 s) — reward improvement (judging rubric)
 
 - Show **dashboard** reward curve and rolling average vs **baseline** (pre-event benchmark).
 - Use one canonical metrics callout (snapshot `2026-04-24T16:48:26Z`, stage URL): **episodes 387**, **avg 0.4634**, **best 1.0032**, **+74.9% vs baseline 0.265**.
@@ -38,7 +38,7 @@
 
 ---
 
-## Training & improvement (~30 s) — Criteria 3 & 4
+## Training & improvement (~30 s) — improvement + pipeline coherence
 
 - **Colab** runs minimal GRPO training against the **real** remote environment API (not a mocked reward).
 - Improvement is **observable** on the curve and in **behaviour** (shorter paths, better notifications, fewer oversight violations) — tie any checkpoint story to **what the IC does differently**, not only the scalar.
@@ -47,7 +47,7 @@
 
 ## Close (~20 s)
 
-> “NEXUS is **OpenEnv-shaped**: isolated episodes, structured actions, measurable outcomes, and a problem that stays hard after the novelty wears off. We meet the **hard gates** — OpenEnv latest in the toolchain + Colab TRL/Unsloth + HF blog/video slot — and we optimised for the **40% environment** and **30% storytelling** bars with a demo you can **drive live** in under two minutes.”
+> “NEXUS is **OpenEnv-shaped**: isolated episodes, structured actions, measurable outcomes, and a problem that stays hard after the novelty wears off. We meet **hackathon compliance**: OpenEnv latest in the toolchain, Colab TRL/Unsloth training, and the required HF blog or short video slot—and we optimised for the **40% environment** and **30% storytelling** rubric weights with a demo you can **drive live** in under two minutes.”
 
 **Stop at 3:00. Breathe. Hand off for Q&A.**
 
@@ -65,7 +65,7 @@ Answer in **short paragraphs**; do not invent numbers not on the dashboard.
 | **Reward hacking?** | Sparse terminal reward + oversight + coalition + tool budgets; red herrings in harder incidents. |
 | **What is partial observability?** | IC observation is a slice; specialists see tool outputs for their role; IC never sees everything at once. |
 | **INC007 in 30 s?** | Nightmare incident: multi-region blast radius; **schema drift** forces contract change mid-episode — reserved for sharp Q&A, not the full live path if time is short. |
-| **Why GRPO / TRL / Unsloth?** | BRD hard gate #2: minimal training in Colab with **HF TRL** and **Unsloth** for efficient QLoRA on Qwen-class IC policy. |
+| **Why GRPO / TRL / Unsloth?** | Per compliance: minimal training in Colab with **HF TRL** and **Unsloth** for efficient QLoRA on Qwen-class IC policy. |
 | **What if the Space is slow?** | Training is async from Colab; dashboard refreshes on timer; auto-demo is one POST chain. |
 | **Baseline 0.265?** | Pre-event scripted benchmark documented in server; curve compares **trained vs that baseline** for “observable improvement.” |
 | **Single strongest differentiator?** | Multi-agent + sparse reward + **schema drift** on INC007 in one OpenEnv-hosted stack judges can open in the browser. |

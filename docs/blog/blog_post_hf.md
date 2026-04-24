@@ -98,7 +98,7 @@ Before on-site GPU training, 30 scripted baseline episodes established the floor
 
 Expected trained model performance after 200 GRPO steps: **0.55–0.75**
 
-The gap shows clear, observable training signal — satisfying BRD Criterion 3 (observable reward improvement evidence).
+The gap shows clear, observable training signal—supporting the hackathon rubric emphasis on **observable reward improvement**.
 
 ---
 

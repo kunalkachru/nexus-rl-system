@@ -69,7 +69,7 @@ Say:
 ## [1:50-2:00] Close
 
 Say:
-"We satisfy OpenEnv hard gates, show live reward improvement, and can directly inspect behavior delta in the running environment."
+"We satisfy OpenEnv validation requirements, show live reward improvement, and can directly inspect behavior delta in the running environment."
 
 ---
 

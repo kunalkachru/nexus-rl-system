@@ -65,7 +65,7 @@ Purpose: deterministic final-day operations with explicit fallback paths and no 
   - `/health`
   - `/metadata`
   - `/schema`
-- Pivot to hard-gate proof + archived transcript evidence.
+- Pivot to compliance proof + archived transcript evidence.
 - Do not attempt risky hotfixes during final window.
 
 ## Roles and ownership

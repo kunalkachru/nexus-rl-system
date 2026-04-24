@@ -45,12 +45,12 @@ Completed deliverables:
 - Network traces show successful API polling and interactions (`200` status on judge-critical endpoints).
 - No blocking console errors observed.
 
-## BRD compliance status
+## Hackathon compliance status
 
 - OpenEnv workflow compliance: **pass**
 - Colab training script path (TRL/Unsloth): **present and documented**
 - Public artifact path (blog/video): **script and references prepared**
-- Criterion evidence mapping and traceability: **locked in compliance and evidence docs**
+- Rubric evidence mapping and traceability: **locked in compliance and evidence docs**
 
 ## Residual risks
 

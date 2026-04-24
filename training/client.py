@@ -197,7 +197,7 @@ class NexusClient:
 def _baseline_policy(obs: Dict[str, Any]) -> Dict[str, Any]:
     """
     Deterministic rule-based policy. Used for:
-    - Generating pre-event reward curves (Criterion 3 evidence)
+    - Generating pre-event reward curves (observable improvement evidence)
     - Filling in remaining steps during GRPO rollouts
 
     Not optimized — just coherent enough to produce valid episodes.

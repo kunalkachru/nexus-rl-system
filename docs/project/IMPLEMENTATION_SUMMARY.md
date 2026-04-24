@@ -277,7 +277,7 @@ Once Phase 7 tests pass:
 | **Reward Progress** | 20% | Observable Chart.js curves + MTTR improvements | ✅ Dashboard ready |
 | **Pipeline** | 10% | GRPO on Colab GPU → HF Space API | ✅ Tests ready |
 
-**Hard Gates**:
+**Mandatory submission requirements**:
 - ✅ OpenEnv v0.2.3 compatible
 - ✅ HuggingFace TRL GRPO training
 - ✅ Trained checkpoint (TODO: save during training)

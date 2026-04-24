@@ -181,7 +181,7 @@ curl -X POST https://kunalkachru23-nexus-enhanced-stage.hf.space/reset \
    - Episodes 30+: Convergence around 0.6-0.8
    - Total training time: ~6 hours for 50 episodes on Colab GPU
 
-4. **Blog Post** (Hard Gate)
+4. **Blog Post** (submission requirement)
    - Topic: "How NEXUS Enhanced Trains Multi-Agent Incident Response via GRPO"
    - Sections:
      - Problem statement (CrowdStrike scale)
@@ -191,7 +191,7 @@ curl -X POST https://kunalkachru23-nexus-enhanced-stage.hf.space/reset \
    - Length: ~800-1200 words (< 2 min read)
    - Publish to HF blog or Medium
 
-5. **Pitch Video** (Hard Gate)
+5. **Pitch Video** (submission requirement)
    - Duration: 3 minutes max
    - Content:
      - Show judge dashboard at `/`

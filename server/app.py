@@ -546,7 +546,7 @@ def get_episodes(run_id: Optional[str] = None):
 
 @app.get("/learning-curve")
 def get_learning_curve(run_id: Optional[str] = None):
-    """Rolling reward average — for Criterion 3 observable improvement evidence."""
+    """Rolling reward average — for observable training-progress evidence (judging rubric)."""
     run_key = _normalize_run_id_filter(run_id)
     scoped_records = _get_records_for_run(run_key)
     rewards = [float(rec.get("reward", 0.0)) for rec in scoped_records]
@@ -561,7 +561,7 @@ def get_learning_curve(run_id: Optional[str] = None):
         "run_id": run_key or "all",
         "rewards": rewards,
         "rolling_avg": rolling,
-        "baseline": 0.265,  # Pre-event scripted baseline avg (BRD Criterion 3)
+        "baseline": 0.265,  # Pre-event scripted baseline avg (observable improvement baseline)
         "episode_count": len(rewards),
         "current_avg": round(sum(rewards) / len(rewards), 4),
         "improvement": round(sum(rewards) / len(rewards) - 0.265, 4),

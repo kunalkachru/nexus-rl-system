@@ -3,7 +3,7 @@ train.py — Reward-conditioned pre-event training run.
 
 Uses the scripted baseline policy (or optionally an LLM via inference.py)
 to generate episodes and record reward curves. This produces the
-training_artifacts/ evidence required for Judging Criterion 3.
+training_artifacts/ evidence for observable training progress (judging rubric).
 
 Usage:
     # 30 CPU episodes — generates pre_event_reward_curves.json and reward_curve.png

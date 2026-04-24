@@ -9,7 +9,7 @@ class IncidentType(Enum):
     CASCADE = "cascade"
     SECURITY = "security"
     DATA = "data"
-    # Theme 3.2 — personalized delegation / conflicting priorities (BRD §12)
+    # Theme 3.2 — personalized delegation / conflicting priorities (hackathon personalized track)
     PERSONAL_ASSISTANT = "personal_assistant"
 
 

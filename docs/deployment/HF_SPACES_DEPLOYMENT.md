@@ -212,5 +212,5 @@ git push origin main
 ## Next Steps
 
 - **Phase 7**: Run full regression tests against deployed HF Space
-- **Blog Post**: Write HF blog explaining NEXUS architecture (hard gate)
-- **Pitch**: Prepare 3-minute demo for judges (hard gate)
+- **Blog Post**: Write HF blog explaining NEXUS architecture (per submission requirements)
+- **Pitch**: Prepare 3-minute demo for judges (per submission requirements)

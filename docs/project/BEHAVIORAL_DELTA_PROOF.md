@@ -1,6 +1,6 @@
-# Criterion 4 Behavioral Delta Proof
+# Behavioral delta proof (pipeline coherence)
 
-This sheet demonstrates BRD §18.2 Criterion 4 intent: measurable improvement in **how the agent acts**, not only reward numbers.
+This sheet demonstrates **hackathon judging intent** for reward-and-pipeline coherence: measurable improvement in **how the agent acts**, not only reward numbers.
 
 ## Fixed evaluation set (canonical)
 
@@ -60,9 +60,9 @@ These support that gain is not only speed; diagnosis/coordination/customer dimen
    - `GET /learning-curve`
    - confirm aggregate improvement trend and rolling average.
 
-## Why this satisfies Criterion 4
+## Why this satisfies the pipeline-coherence rubric row
 
-Criterion 4 asks for coherent reward logic and meaningful pipeline-driven behavior change.
+The judging rubric asks for coherent reward logic and meaningful pipeline-driven behavior change.
 NEXUS evidence shows:
 
 - Coherent multi-dimensional reward decomposition (MTTR, diagnosis, customer, coordination, oversight, depth).
