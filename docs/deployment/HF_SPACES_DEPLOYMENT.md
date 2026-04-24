@@ -63,18 +63,18 @@ Once HF Spaces shows "Running" status:
 
 ```bash
 # Test judge dashboard endpoint
-curl -s https://kunalkachru23-nexus-enhanced.hf.space/health | jq .
+curl -s https://kunalkachru23-nexus-enhanced-stage.hf.space/health | jq .
 
 # Test reset endpoint
-curl -s -X POST https://kunalkachru23-nexus-enhanced.hf.space/reset \
+curl -s -X POST https://kunalkachru23-nexus-enhanced-stage.hf.space/reset \
   -H "Content-Type: application/json" \
   -d '{"incident_id": "INC003"}' | jq .
 
 # Test metrics endpoint
-curl -s https://kunalkachru23-nexus-enhanced.hf.space/metrics | jq .
+curl -s https://kunalkachru23-nexus-enhanced-stage.hf.space/metrics | jq .
 
 # Test learning curve
-curl -s https://kunalkachru23-nexus-enhanced.hf.space/learning-curve | jq .
+curl -s https://kunalkachru23-nexus-enhanced-stage.hf.space/learning-curve | jq .
 ```
 
 ### Step 6: Update Colab Notebook
@@ -82,7 +82,7 @@ curl -s https://kunalkachru23-nexus-enhanced.hf.space/learning-curve | jq .
 In `notebooks/grpo_colab_v2.ipynb`, ensure BASE_URL points to deployed space:
 
 ```python
-BASE_URL = "https://kunalkachru23-nexus-enhanced.hf.space"  # YOUR SPACE URL
+BASE_URL = "https://kunalkachru23-nexus-enhanced-stage.hf.space"  # YOUR SPACE URL
 ```
 
 Then run connectivity check:
@@ -102,7 +102,7 @@ cat > test_hf_space_deployment.py << 'EOF'
 import requests
 import json
 
-BASE_URL = "https://kunalkachru23-nexus-enhanced.hf.space"
+BASE_URL = "https://kunalkachru23-nexus-enhanced-stage.hf.space"
 
 def test_health():
     resp = requests.get(f"{BASE_URL}/health")
@@ -193,8 +193,8 @@ python test_hf_space_deployment.py
 
 While Colab trains:
 
-1. **Watch reward curves**: https://kunalkachru23-nexus-enhanced.hf.space/learning-curve
-2. **Check metrics**: `curl https://kunalkachru23-nexus-enhanced.hf.space/metrics`
+1. **Watch reward curves**: https://kunalkachru23-nexus-enhanced-stage.hf.space/learning-curve
+2. **Check metrics**: `curl https://kunalkachru23-nexus-enhanced-stage.hf.space/metrics`
 3. **Monitor Colab logs** for reward_fn errors
 4. **Expected pattern**: First 5-10 episodes ~0.2 reward, then gradual improvement to 0.6-0.8
 

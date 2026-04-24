@@ -85,7 +85,7 @@ python deploy_to_hf_spaces.py
 #   🎉 Deployment complete!
 
 # Monitor build progress:
-# https://huggingface.co/spaces/kunalkachru23/nexus-enhanced
+# https://huggingface.co/spaces/kunalkachru23/nexus-enhanced-stage
 # Look for "Building" → "Running" status (5-10 min)
 ```
 
@@ -94,12 +94,12 @@ Once HF Space shows "Running" status:
 
 ```bash
 # Test public health endpoint
-curl https://kunalkachru23-nexus-enhanced.hf.space/health
+curl https://kunalkachru23-nexus-enhanced-stage.hf.space/health
 
 # Expected: {"status": "healthy", "environment": "nexus-enhanced", ...}
 
 # Run full remote test suite
-python test_hf_space_deployment.py --url https://kunalkachru23-nexus-enhanced.hf.space
+python test_hf_space_deployment.py --url https://kunalkachru23-nexus-enhanced-stage.hf.space
 
 # Expected: ✅ ALL 7 TESTS PASS
 ```
@@ -107,7 +107,7 @@ python test_hf_space_deployment.py --url https://kunalkachru23-nexus-enhanced.hf
 ### Step 5: Verify Judge Dashboard
 Open in browser:
 ```
-https://kunalkachru23-nexus-enhanced.hf.space/
+https://kunalkachru23-nexus-enhanced-stage.hf.space/
 ```
 
 **Expected to see**:
@@ -125,13 +125,13 @@ After deployment, run:
 
 ```bash
 # Full test suite against deployed environment
-python test_hf_space_deployment.py --url https://kunalkachru23-nexus-enhanced.hf.space
+python test_hf_space_deployment.py --url https://kunalkachru23-nexus-enhanced-stage.hf.space
 
 # Individual endpoint tests:
-curl https://kunalkachru23-nexus-enhanced.hf.space/health | jq .
-curl https://kunalkachru23-nexus-enhanced.hf.space/metrics | jq .
-curl https://kunalkachru23-nexus-enhanced.hf.space/learning-curve | jq .
-curl -X POST https://kunalkachru23-nexus-enhanced.hf.space/reset \
+curl https://kunalkachru23-nexus-enhanced-stage.hf.space/health | jq .
+curl https://kunalkachru23-nexus-enhanced-stage.hf.space/metrics | jq .
+curl https://kunalkachru23-nexus-enhanced-stage.hf.space/learning-curve | jq .
+curl -X POST https://kunalkachru23-nexus-enhanced-stage.hf.space/reset \
   -H "Content-Type: application/json" \
   -d '{"incident_id": "INC003"}' | jq .
 ```
@@ -166,14 +166,14 @@ curl -X POST https://kunalkachru23-nexus-enhanced.hf.space/reset \
 ### After Phase 7 Passes:
 
 1. **Update Colab Notebook** (grpo_colab_v2.ipynb)
-   - Verify `BASE_URL = "https://kunalkachru23-nexus-enhanced.hf.space"`
+   - Verify `BASE_URL = "https://kunalkachru23-nexus-enhanced-stage.hf.space"`
    - Run connectivity check cell
    - Expected: ✅ Connected message
 
 2. **Start Training**
    - Run all cells in Colab
    - Training produces reward curves
-   - Monitor: https://kunalkachru23-nexus-enhanced.hf.space/learning-curve
+   - Monitor: https://kunalkachru23-nexus-enhanced-stage.hf.space/learning-curve
 
 3. **Expected Training Results**
    - First 5-10 episodes: ~0.2 reward (baseline)
@@ -222,7 +222,7 @@ curl -X POST https://kunalkachru23-nexus-enhanced.hf.space/reset \
 
 | Service | URL | Purpose |
 |---------|-----|---------|
-| Judge Dashboard | `https://kunalkachru23-nexus-enhanced.hf.space/` | Live metrics + curves |
+| Judge Dashboard | `https://kunalkachru23-nexus-enhanced-stage.hf.space/` | Live metrics + curves |
 | API Health | `.../health` | Connectivity check |
 | Metrics | `.../metrics` | Training stats |
 | Learning Curve | `.../learning-curve` | Reward history |

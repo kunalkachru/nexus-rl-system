@@ -76,7 +76,7 @@ NEXUS Enhanced is a multi-agent incident response RL environment for the Meta Py
 **7 Cells**:
 1. Install: unsloth, trl, transformers, matplotlib
 2. Connectivity check: Verify HF Space reachable
-3. `NexusRemoteEnv`: Reset/step interface to PUBLIC `https://kunalkachru23-nexus-enhanced.hf.space`
+3. `NexusRemoteEnv`: Reset/step interface to PUBLIC `https://kunalkachru23-nexus-enhanced-stage.hf.space`
 4. `reward_fn`: Parse IC action → call remote env → collect reward
 5. Load Qwen2.5-1.5B: Unsloth QLoRA (rank=16, 4-bit, targets q_proj/k_proj/v_proj/o_proj)
 6. GRPOTrainer: learning_rate=5e-5, batch_size=2, num_generations=4
@@ -104,10 +104,10 @@ NEXUS Enhanced is a multi-agent incident response RL environment for the Meta Py
 ### Phase 6: HF Spaces Deployment (Ready) 🚀
 
 **Steps**:
-1. Push code to https://huggingface.co/spaces/kunalkachru23/nexus-enhanced
+1. Push code to https://huggingface.co/spaces/kunalkachru23/nexus-enhanced-stage
 2. HF Spaces auto-builds Docker image
 3. Services available at:
-   - Judge dashboard: `https://kunalkachru23-nexus-enhanced.hf.space/` (port 7860)
+   - Judge dashboard: `https://kunalkachru23-nexus-enhanced-stage.hf.space/` (port 7860)
    - Metrics: `/metrics`, `/learning-curve`, `/health`
    - API: `/reset`, `/step/{session_id}`
 
@@ -128,7 +128,7 @@ NEXUS Enhanced is a multi-agent incident response RL environment for the Meta Py
 6. ✅ HTML dashboard (`GET /`)
 7. ✅ Full episode execution (20 steps)
 
-**Run**: `python test_hf_space_deployment.py --url https://kunalkachru23-nexus-enhanced.hf.space`
+**Run**: `python test_hf_space_deployment.py --url https://kunalkachru23-nexus-enhanced-stage.hf.space`
 
 ---
 
@@ -239,7 +239,7 @@ git commit -m "Phase 5-7: Docker multi-service setup + deployment tests"
 # Push to HF Spaces repo
 git push origin main
 
-# Monitor build: https://huggingface.co/spaces/kunalkachru23/nexus-enhanced
+# Monitor build: https://huggingface.co/spaces/kunalkachru23/nexus-enhanced-stage
 # Takes ~5-10 minutes for Docker build
 ```
 
@@ -249,7 +249,7 @@ Once HF Spaces shows "Running":
 
 ```bash
 # Test all endpoints
-python test_hf_space_deployment.py --url https://kunalkachru23-nexus-enhanced.hf.space
+python test_hf_space_deployment.py --url https://kunalkachru23-nexus-enhanced-stage.hf.space
 
 # Expected: ✅ ALL TESTS PASS
 ```
@@ -260,9 +260,9 @@ Once Phase 7 tests pass:
 
 ```
 1. Open notebooks/grpo_colab_v2.ipynb
-2. Verify BASE_URL = "https://kunalkachru23-nexus-enhanced.hf.space"
+2. Verify BASE_URL = "https://kunalkachru23-nexus-enhanced-stage.hf.space"
 3. Run all cells (Unsloth + TRL GRPO training)
-4. Monitor reward curves at: https://kunalkachru23-nexus-enhanced.hf.space/learning-curve
+4. Monitor reward curves at: https://kunalkachru23-nexus-enhanced-stage.hf.space/learning-curve
 5. Expected trajectory: baseline 0.28 → improve to 0.6-0.8 over 50-100 episodes
 ```
 
@@ -300,19 +300,19 @@ bash test_local_deployment.sh
 ### HF Space Testing
 ```bash
 # Against deployed environment
-python test_hf_space_deployment.py --url https://kunalkachru23-nexus-enhanced.hf.space
+python test_hf_space_deployment.py --url https://kunalkachru23-nexus-enhanced-stage.hf.space
 ```
 
 ### Manual Verification
 ```bash
 # FastAPI health
-curl https://kunalkachru23-nexus-enhanced.hf.space/health
+curl https://kunalkachru23-nexus-enhanced-stage.hf.space/health
 
 # Judge dashboard
-open https://kunalkachru23-nexus-enhanced.hf.space/
+open https://kunalkachru23-nexus-enhanced-stage.hf.space/
 
 # Metrics snapshot
-curl https://kunalkachru23-nexus-enhanced.hf.space/metrics
+curl https://kunalkachru23-nexus-enhanced-stage.hf.space/metrics
 ```
 
 ---
@@ -350,7 +350,7 @@ curl https://kunalkachru23-nexus-enhanced.hf.space/metrics
 
 ## Questions for User
 
-1. **HF Space URL**: Is `kunalkachru23-nexus-enhanced` the correct space slug?
+1. **HF Space URL**: Canonical judge/demo Space is `kunalkachru23/nexus-enhanced-stage` (`kunalkachru23-nexus-enhanced-stage.hf.space`).
 2. **Training time**: Target training duration on Colab GPU (default ~6 hours for 50 episodes)?
 3. **Checkpoint save**: Should checkpoint be saved to HF model hub or kept local?
 4. **Blog post**: Topic preference (technical deep-dive vs. storytelling narrative)?

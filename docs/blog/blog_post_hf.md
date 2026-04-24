@@ -9,8 +9,8 @@ authors:
 
 *Team Falcons — Meta PyTorch OpenEnv Hackathon Grand Finale, April 2026*
 
-**Live Demo:** [huggingface.co/spaces/kunalkachru23/nexus-enhanced](https://huggingface.co/spaces/kunalkachru23/nexus-enhanced)  
-**Training Notebook:** [grpo_colab_v2.ipynb](https://huggingface.co/spaces/kunalkachru23/nexus-enhanced/blob/main/notebooks/grpo_colab_v2.ipynb)
+**Live Demo:** [huggingface.co/spaces/kunalkachru23/nexus-enhanced-stage](https://huggingface.co/spaces/kunalkachru23/nexus-enhanced-stage)  
+**Training Notebook:** [grpo_colab_v2.ipynb](https://huggingface.co/spaces/kunalkachru23/nexus-enhanced-stage/blob/main/notebooks/grpo_colab_v2.ipynb)
 
 ---
 
@@ -141,10 +141,10 @@ The expert board notices IC weaknesses and shifts its evaluation focus — simul
 
 ```bash
 # Live demo — no install needed
-curl -X POST https://kunalkachru23-nexus-enhanced.hf.space/demo/run/INC003 | python -m json.tool
+curl -X POST https://kunalkachru23-nexus-enhanced-stage.hf.space/demo/run/INC003 | python -m json.tool
 
 # Or open the web dashboard
-https://huggingface.co/spaces/kunalkachru23/nexus-enhanced
+https://huggingface.co/spaces/kunalkachru23/nexus-enhanced-stage
 ```
 
 **Training notebook** (GRPO on Qwen2.5-1.5B, cells 1–3 run without GPU):  

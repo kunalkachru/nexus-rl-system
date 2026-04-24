@@ -86,7 +86,7 @@ The trained model learns to query the right service, notify customers proactivel
 
 For academia, it's a benchmarkable environment. For enterprise, it's a path toward AI-assisted incident management. For Meta and PyTorch, it demonstrates OpenEnv's potential for real-world complexity.
 
-**Live demo:** https://kunalkachru23-nexus-enhanced.hf.space/ 
+**Live demo:** https://kunalkachru23-nexus-enhanced-stage.hf.space/ 
 
 Thank you."
 
