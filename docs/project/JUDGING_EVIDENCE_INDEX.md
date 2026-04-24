@@ -1,6 +1,6 @@
 # NEXUS Enhanced — Judging Evidence Index
 
-Snapshot timestamp (UTC): `2026-04-22T20:46:04Z`  
+Snapshot timestamp (UTC): `2026-04-24T16:48:26Z`  
 Stage URL: `https://kunalkachru23-nexus-enhanced-stage.hf.space`
 
 ## Hard-gate evidence (BRD Section 17)
@@ -15,8 +15,8 @@ Stage URL: `https://kunalkachru23-nexus-enhanced-stage.hf.space`
    - Uses Unsloth + TRL GRPO with remote environment reward calls.
 
 3. Blog/video submission artifact
-   - Blog draft: `docs/blog/blog_post.md`
-   - Ready-to-publish variant: `docs/blog/blog_post_hf.md`
+   - Blog draft: `docs/blog/blog_post_hf.md`
+   - Video script (<2 min): `docs/pitch/YOUTUBE_RECORDING_SCRIPT.md`
    - Owner action: publish final link and add URL to submission package.
 
 4. Compliance lock matrix
@@ -36,13 +36,13 @@ Scope policy:
 - If quoting run-scoped numbers in notes, include the explicit `run_id`.
 
 Snapshot values:
-- Episode count: `360`
-- Average reward: `0.4339`
-- Best reward: `0.9484`
+- Episode count: `387`
+- Average reward: `0.4634`
+- Best reward: `1.0032`
 - Baseline reward: `0.265`
-- Improvement: `+63.7%`
+- Improvement: `+74.9%`
 
-Visualization artifact:
+Visualization artifact (tracked):
 - `docs/images/training_reward_curve.png`
 - Refresh command:
 
@@ -62,8 +62,8 @@ python scripts/export_submission_snapshot.py \
 This writes timestamped snapshot files under `docs/project/snapshots/`.
 
 Canonical demo-day snapshot set (stage URL only):
-- `docs/project/snapshots/submission_snapshot_20260422T204604Z.md`
-- `docs/project/snapshots/component_metrics_20260422T204604Z.md`
+- `docs/project/snapshots/submission_snapshot_20260424T164826Z.md`
+- `docs/project/snapshots/component_metrics_20260424T164826Z.md`
 
 ## Pipeline and deployment proof
 

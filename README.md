@@ -22,6 +22,38 @@ tags:
 
 NEXUS Enhanced trains an AI Incident Commander to orchestrate 5 specialist agents across 7 production incident scenarios, culminating in a CrowdStrike-scale global failure affecting 8.5 million machines.
 
+## Judge Fast Path (3-5 min)
+
+Use this section first during judging/review.
+
+- **Live environment (HF Space):** https://kunalkachru23-nexus-enhanced-stage.hf.space/
+- **3-minute pitch script:** [`docs/pitch/PITCH.md`](docs/pitch/PITCH.md)
+- **2-minute demo walkthrough:** [`docs/pitch/DEMO_WALKTHROUGH.md`](docs/pitch/DEMO_WALKTHROUGH.md)
+- **Hard-gate + rubric evidence index:** [`docs/project/JUDGING_EVIDENCE_INDEX.md`](docs/project/JUDGING_EVIDENCE_INDEX.md)
+- **Behavioral delta (before vs after):** [`docs/project/BEHAVIORAL_DELTA_PROOF.md`](docs/project/BEHAVIORAL_DELTA_PROOF.md)
+- **Compliance lock matrix:** [`docs/project/COMPLIANCE_LOCK_MATRIX.md`](docs/project/COMPLIANCE_LOCK_MATRIX.md)
+- **HF blog draft (publish-ready):** [`docs/blog/blog_post_hf.md`](docs/blog/blog_post_hf.md)
+- **YouTube (<2 min):** pending final recording (intentionally last-mile)
+
+### Canonical evidence snapshot (frozen)
+
+From [`docs/project/snapshots/submission_snapshot_20260424T164826Z.md`](docs/project/snapshots/submission_snapshot_20260424T164826Z.md):
+
+- Episodes: `387`
+- Average reward: `0.4634`
+- Best reward: `1.0032`
+- Baseline reward: `0.265`
+- Improvement: `+74.9%`
+
+### Baseline vs trained (quick read)
+
+| Signal | Baseline (pre-event benchmark) | Trained (latest frozen snapshot) |
+|---|---:|---:|
+| Average reward | 0.2650 | 0.4634 |
+| Best reward | - | 1.0032 |
+| Improvement | - | +74.9% |
+| Behavioral evidence | Scripted/weak coordination baseline pattern | See [`docs/project/BEHAVIORAL_DELTA_PROOF.md`](docs/project/BEHAVIORAL_DELTA_PROOF.md) |
+
 ## Quick Start
 
 ```bash
@@ -94,7 +126,7 @@ python training/train.py --episodes 30 --difficulties easy,medium
 
 ## Training data visualization
 
-Episode rewards from the deployed Space (`GET /learning-curve`) — same data as the dashboard training tab. Image is committed for README / slides; refresh after significant training:
+Episode rewards from the deployed Space (`GET /learning-curve`) — same data as the dashboard training tab.
 
 ```bash
 python scripts/export_reward_plot.py \
@@ -102,7 +134,9 @@ python scripts/export_reward_plot.py \
   --out docs/images/training_reward_curve.png
 ```
 
-![Reward history (HF stage Space)](docs/images/training_reward_curve.png)
+![Reward history (HF stage Space, x-axis=episode, y-axis=reward)](docs/images/training_reward_curve.png)
+
+Caption: blue line is per-episode reward, green is rolling average, red dashed line is baseline (`0.265`).
 
 ## BRD hard gate — OpenEnv (reproduce)
 
@@ -125,6 +159,8 @@ openenv validate --url http://127.0.0.1:7860
 openenv validate --url https://kunalkachru23-nexus-enhanced-stage.hf.space
 ./gate.sh --skip-regression --skip-local-api --hf-url https://kunalkachru23-nexus-enhanced-stage.hf.space
 ```
+
+**Deploying with OpenEnv:** use `openenv push . --repo-id <user>/<space> --exclude .hfignore` (or **`./gate.sh --push`**, which adds `--exclude` for you). OpenEnv does not load `.hfignore` unless you pass it via `--exclude`; omitting it does **not** break the build, it only uploads extra paths (less lean). See `docs/guides/QUICK_START.md` for a short rationale.
 
 `requirements.txt` **omits** `openenv` on the Space Docker image to keep builds reliable; the **Colab notebook** installs `openenv>=0.2.3` for the training hard gate. Contract-only routes (`/metadata`, `/schema`, `GET /state`, `POST /mcp`) satisfy `openenv validate --url`; episode logic uses **`/reset`**, **`/step/{session_id}`**, **`/state/{session_id}`** only.
 
@@ -161,11 +197,25 @@ Documentation lives under [`docs/`](docs/) (guides, deployment, project status, 
 
 - **[`docs/pitch/PITCH.md`](docs/pitch/PITCH.md)** — 3-minute spoken script + 2-minute Q&A bullets (BRD §18.1).
 - **[`docs/project/PLAN_OF_ACTION.md`](docs/project/PLAN_OF_ACTION.md)** — BRD compliance matrix + prioritized todo table.
-- **`scripts/export_reward_plot.py`** — export reward curve PNG from `--url` or `episode_rewards.json` (Criterion 3 slides). Committed chart: **`docs/images/training_reward_curve.png`** (see section above).
+- **`scripts/export_reward_plot.py`** — export reward curve PNG from `--url` or `episode_rewards.json` (Criterion 3 slides). Canonical chart (tracked in git): **`docs/images/training_reward_curve.png`** (see section above).
+
+## Final submission checklist (hard-gate safe)
+
+- [ ] Space URL is live and included in final form: `https://kunalkachru23-nexus-enhanced-stage.hf.space/`
+- [ ] `openenv validate .` passes locally.
+- [ ] `openenv validate --url https://kunalkachru23-nexus-enhanced-stage.hf.space` passes.
+- [ ] Full gate green: `./gate.sh --push`
+- [ ] Latest frozen snapshot files are refreshed and referenced:
+  - `docs/project/snapshots/submission_snapshot_20260424T164826Z.md`
+  - `docs/project/snapshots/component_metrics_20260424T164826Z.md`
+- [ ] Blog/video/slide links are present and clickable from this README:
+  - Blog draft: [`docs/blog/blog_post_hf.md`](docs/blog/blog_post_hf.md)
+  - Video link: _pending final recording_
+- [ ] Pitch numbers match frozen snapshot values (no stale metrics in scripts).
 
 ## Blog Post
 
-See [`docs/blog/blog_post.md`](docs/blog/blog_post.md) for the full HuggingFace blog post (1,300+ words, includes reward model deep-dive, training methodology, and demo walkthrough). **Publish** on HuggingFace and add the public URL for BRD §17.3.
+See [`docs/blog/blog_post_hf.md`](docs/blog/blog_post_hf.md) for the publish-ready HuggingFace blog draft (includes reward model deep-dive, training methodology, and demo walkthrough). Publish and add the public URL for BRD §17.3.
 
 ## Team
 

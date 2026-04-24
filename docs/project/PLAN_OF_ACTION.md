@@ -28,7 +28,7 @@
 | 1 | Run **`./gate.sh`** (or pytest + `openenv validate --url` on stage) before each demo | Team | All green |
 | 2 | **`openenv push`** stage Space after meaningful code/doc change | Team | HF dashboard matches local |
 | 3 | Execute **`grpo_colab_v2.ipynb`** on Colab T4+ end-to-end | Team | Notebook completes; curve updates on stage |
-| 4 | **`python scripts/export_reward_plot.py --url https://kunalkachru23-nexus-enhanced-stage.hf.space`** → drop PNG into deck | Team | `outputs/reward_export.png` in slide asset folder |
+| 4 | **`python scripts/export_reward_plot.py --url https://kunalkachru23-nexus-enhanced-stage.hf.space`** → drop PNG into deck | Team | `docs/images/training_reward_curve.png` in slide asset folder |
 | 5 | Rehearse **`docs/pitch/PITCH.md`** with live demo (timer **3:00**) | Team | No overrun; Q&A 2:00 bank ready |
 | 6 | **Publish** HF blog *or* record **≤2 min** YouTube; add URL to README | Team | BRD §17.3 satisfied |
 | 7 | Submission package: Space URL, Colab link, blog/video link, `openenv --version` screenshot | Team | Checklist complete |
@@ -51,5 +51,5 @@ cd nexus-enhanced
 pytest tests/ -q
 openenv validate .
 openenv validate --url https://kunalkachru23-nexus-enhanced-stage.hf.space
-python scripts/export_reward_plot.py --url https://kunalkachru23-nexus-enhanced-stage.hf.space --out outputs/reward_export.png
+python scripts/export_reward_plot.py --url https://kunalkachru23-nexus-enhanced-stage.hf.space --out docs/images/training_reward_curve.png
 ```

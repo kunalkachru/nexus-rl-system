@@ -27,9 +27,19 @@ Purpose: deterministic final-day operations with explicit fallback paths and no 
 
 1. Open `/web`.
 2. Show metrics/reward context (10-15s).
-3. Run auto-demo on INC003 (20-30s).
-4. Show completed phase progression + reward breakdown.
-5. Close with one innovation claim + one anti-hacking claim + one measurable improvement claim.
+3. Switch to **Validation** tab.
+4. Run scripted auto-demo on INC003 (20-30s).
+5. Show completed phase progression + reward breakdown.
+6. Run one guided/manual step on INC008.
+7. Close with one innovation claim + one anti-hacking claim + one measurable improvement claim.
+
+## Judge narrative map (talk-track order)
+
+1. **Problem:** incident command needs multi-agent coordination under partial observability.
+2. **Environment:** seven incidents, specialist roles, long-horizon flow, schema drift/personalized case.
+3. **Evidence:** reward curve + frozen baseline comparison + live demo completion.
+4. **Behavior change:** trained policy sequences actions and coordination better than baseline pattern.
+5. **Why it matters:** this environment trains transferable enterprise decision behavior, not toy-game shortcuts.
 
 ## Fallback branches
 

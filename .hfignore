@@ -1,9 +1,12 @@
-# Hugging Face Hub / Spaces: exclude paths from uploads where tooling respects this file.
-# Official `upload_folder()` primarily honors root `.gitignore`; this file documents
-# Hub-oriented exclusions and mirrors `.dockerignore` so Docker builds and Hub syncs stay aligned.
+# Hugging Face Hub upload excludes for `openenv push`.
 #
-# If your client only reads `.gitignore`, rely on the expanded `.gitignore` in this repo;
-# Docker always reads `.dockerignore` for `COPY .` during Space builds.
+# IMPORTANT — OpenEnv behavior (see Meta OpenEnv `push.py`):
+#   - Pass this file explicitly: `openenv push . --repo-id ... --exclude .hfignore`
+#     (`openenv push` does NOT auto-load this file.)
+#   - Lines starting with `!` (gitignore-style negation) are IGNORED by OpenEnv push.
+#     Do not use negation here; list only positive exclude globs.
+#
+# Keep in sync with deployment intent in `.dockerignore` where patterns overlap.
 
 .git
 .github
@@ -24,6 +27,7 @@ venv
 dist
 build
 
+# Tests & local gate harness (not Space runtime)
 tests
 test_*.py
 test_local_deployment.sh
@@ -32,30 +36,21 @@ test_hf_space_deployment.py
 test_regression_local.py
 gate.sh
 
-notebooks/*
-!notebooks/grpo_colab_v2.ipynb
-!notebooks/grpo_colab_enhanced.ipynb
-!notebooks/grpo_colab_longrun_resumable.py
+# Colab / package training code (Space serves API + Streamlit; keep root train.py / inference.py for OpenEnv layout)
 training
-train.py
 training_simulator.py
 scripts
 
 deploy_to_hf_spaces.py
 docker-compose.yml
 
-*.png
-!web/training_runs/**/*.png
-training_artifacts
+# Large / local-only artifacts (Hub file browser stays lean; canonical notebooks stay — not listed here)
+NEXUS_GRPO_backups
 grpo_checkpoints
 wandb
 
-NEXUS_GRPO_backups
-
-*.md
-**/*.md
-!README.md
-
+# Legacy / duplicate entrypoints (start.sh uses streamlit_app_v2.py only)
+gradio_app.py
 gradio_app_backup.py
 gradio_app_minimal.py
 streamlit_app.py

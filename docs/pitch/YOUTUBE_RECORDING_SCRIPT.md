@@ -28,7 +28,7 @@ Visual:
 
 Say:
 
-"This is live evidence from the deployed environment. In the current snapshot, we have 360 completed episodes, average reward 0.4339 versus baseline 0.265, and best episode reward 0.9484. That's a 63.7% uplift over baseline."
+"This is live evidence from the deployed environment. In the current frozen snapshot, we have 387 completed episodes, average reward 0.4634 versus baseline 0.265, and best episode reward 1.0032. That's a 74.9% uplift over baseline."
 
 Visual:
 - Open `/metrics` or dashboard metrics panel.
@@ -68,7 +68,7 @@ Visual:
 ## Recording checklist
 
 - Use one canonical metrics set from latest frozen snapshot.
-- Current frozen reference: `docs/project/snapshots/submission_snapshot_20260422T204604Z.md` (stage URL).
+- Current frozen reference: `docs/project/snapshots/submission_snapshot_20260424T164826Z.md` (stage URL).
 - Record at 1080p; zoom text enough for judge readability.
 - Keep terminal font large and avoid rapid window switching.
 - If live UI lags, use frozen snapshots and continue smoothly.

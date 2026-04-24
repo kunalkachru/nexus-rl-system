@@ -3,7 +3,7 @@
 | Script | Purpose |
 |--------|--------|
 | **`../../start.sh`** (repo root) | **Production** entrypoint for HF Docker: FastAPI + Streamlit. Must stay at root (`Dockerfile` `CMD`). |
-| **`gate.sh`** | Pre-flight: `pytest`, optional `test_regression_local.py`, localhost API smoke, `openenv validate .`, optional `openenv push`, optional HF URL + `test_hf_space_deployment.py`. |
+| **`gate.sh`** | Pre-flight: `pytest`, optional `test_regression_local.py`, localhost API smoke, `openenv validate .`, optional `openenv push` (uses `--exclude .hfignore` so push honors lean rules), optional HF URL + `test_hf_space_deployment.py`. |
 | **`test_local_deployment.sh`** | Integration test: regression, start uvicorn + curl checks, start Streamlit, leave services up until Enter. |
 | **`test_api_complete.sh`** | Manual curl walkthrough for INC003 (expects API on `localhost:7860`). |
 

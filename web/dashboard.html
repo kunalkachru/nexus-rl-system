@@ -396,8 +396,8 @@
 
         <!-- Tabs -->
         <div class="tabs">
-            <button class="tab-button active" onclick="switchTab('training', event)">📊 Training Metrics</button>
-            <button class="tab-button" onclick="switchTab('validation', event)">🧪 Manual Validation</button>
+            <button type="button" class="tab-button active" data-tab="training" onclick="switchTab('training', event)">📊 Training Metrics</button>
+            <button type="button" class="tab-button" data-tab="validation" onclick="switchTab('validation', event)">🧪 Manual Validation</button>
         </div>
 
         <!-- Training Tab -->
@@ -439,17 +439,6 @@
                 <canvas id="rewardChart"></canvas>
             </div>
             <a class="inline-link" href="/metrics-dashboard">Open Advanced Metrics (live + Colab exports tab)</a>
-        </div>
-
-        <!-- Demo Section -->
-        <div class="section">
-            <div class="section-title">▶️ Live Demo: INC003 (Memory Leak)</div>
-            <div class="section-note">Demo output comes from a scripted fresh session; it is separate from the training reward curve.</div>
-            <button class="demo-button" id="demo-button" onclick="runDemo()">Run Auto-Demo</button>
-            <div id="demo-status" style="display: none;">
-                <div class="spinner"></div>
-                <div>Running INC003 demonstration...</div>
-            </div>
         </div>
 
         <!-- Episode History -->
@@ -519,6 +508,12 @@
                         <p style="font-size: 0.8em; color: #64748b; margin: 0 0 10px;">Guided text is <strong>hardcoded</strong> in this page for repeatable demos. Use <strong>Start Test</strong>, then <strong>Guided: fill + execute</strong> until the episode completes (or continue manually anytime).</p>
                         <button class="validation-button" onclick="startValidationTest()">▶️ Start Test</button>
                         <button class="validation-button" style="background: #8b5cf6; margin-top: 10px;" onclick="executeValidationStep()">➡️ Execute Step</button>
+
+                        <div class="section-title" style="margin-top: 28px; font-size: 1.15em;">▶️ Scripted auto-demo (INC003)</div>
+                        <p class="section-note" style="margin-top: 0;">Runs <code>POST /demo/run/INC003</code> in one shot (separate session from manual test). <strong>Step rewards stay 0</strong> until the episode completes (sparse reward)—use the <strong>final breakdown</strong> at the bottom for the real score. Output stays visible until you clear it.</p>
+                        <button type="button" class="demo-button" id="demo-button" onclick="runDemo()">Run auto-demo (INC003)</button>
+                        <button type="button" class="validation-button-secondary" onclick="clearDemoOutput()" style="margin-top: 8px;">Clear demo output</button>
+                        <div id="demo-status" style="display: none; margin-top: 12px;"></div>
                     </div>
 
                     <!-- Results Panel -->
@@ -761,9 +756,12 @@
             // Show selected tab
             document.getElementById(tabName).classList.add('active');
 
-            // Mark button as active
+            // Mark button as active (click event or programmatic e.g. auto-demo)
             if (event && event.target) {
                 event.target.classList.add('active');
+            } else {
+                const match = document.querySelector('.tab-button[data-tab="' + tabName + '"]');
+                if (match) match.classList.add('active');
             }
         }
 
@@ -1092,7 +1090,19 @@
             }
         }
 
+        function formatDemoStepReward(step) {
+            if (step.reward === undefined || step.reward === null) return '—';
+            return Number(step.reward).toFixed(4);
+        }
+
+        function clearDemoOutput() {
+            const status = document.getElementById('demo-status');
+            status.style.display = 'none';
+            status.innerHTML = '';
+        }
+
         async function runDemo() {
+            switchTab('validation', null);
             const btn = document.getElementById('demo-button');
             const status = document.getElementById('demo-status');
 
@@ -1107,17 +1117,16 @@
                 const transcript = data.transcript || [];
                 let html = '<div style="max-height: 400px; overflow-y: auto;">';
 
-                // Show step-by-step execution
                 transcript.forEach((step, i) => {
                     const phase = step.phase || 'unknown';
-                    const reward = step.reward ? step.reward.toFixed(4) : '0.0000';
-                    const summary = step.action_summary || 'Step executed';
+                    const reward = formatDemoStepReward(step);
+                    const summary = (step.action_summary || (step.observation ? '(reset / observation)' : 'Step executed')).substring(0, 120);
 
                     html += `
                         <div style="background: #0f172a; padding: 12px; margin-bottom: 8px; border-left: 3px solid #60a5fa; border-radius: 4px;">
-                            <div style="font-weight: 600; color: #60a5fa;">Step ${i+1}: ${phase.toUpperCase()}</div>
-                            <div style="font-size: 0.9em; color: #cbd5e1; margin-top: 4px;">${summary.substring(0, 120)}...</div>
-                            <div style="font-size: 0.85em; color: #10b981; margin-top: 4px;">→ Reward: ${reward}</div>
+                            <div style="font-weight: 600; color: #60a5fa;">Step ${i + 1}: ${String(phase).toUpperCase()}</div>
+                            <div style="font-size: 0.9em; color: #cbd5e1; margin-top: 4px;">${summary}${summary.length >= 120 ? '…' : ''}</div>
+                            <div style="font-size: 0.85em; color: #10b981; margin-top: 4px;">→ Step reward (sparse): ${reward}</div>
                         </div>
                     `;
                 });
@@ -1129,29 +1138,22 @@
 
                 html += `
                     <div style="margin-top: 15px; padding: 12px; background: #1e293b; border-radius: 4px;">
-                        <span class="status-badge status-done">✅ Demo Complete!</span>
+                        <span class="status-badge status-done">✅ Demo complete</span>
                         <p style="margin-top: 10px; font-size: 0.9em; color: #cbd5e1;">
-                            <strong>Final Phase:</strong> ${finalPhase} |
-                            <strong>Steps:</strong> ${transcript.length} |
-                            <strong>Reward:</strong> <span style="color: #10b981; font-weight: 600;">${finalReward}</span>
+                            <strong>Final phase:</strong> ${finalPhase} |
+                            <strong>Transcript rows:</strong> ${transcript.length} |
+                            <strong>Episode total reward:</strong> <span style="color: #10b981; font-weight: 600;">${finalReward}</span>
                         </p>
                     </div>
                 `;
 
                 status.innerHTML = html;
-
-                // Refresh data after delay
-                setTimeout(() => {
-                    fetchMetrics();
-                    fetchEpisodes();
-                    fetchLearningCurve();
-                    setTimeout(() => {
-                        status.style.display = 'none';
-                        btn.disabled = false;
-                    }, 1000);
-                }, 2000);
+                fetchMetrics();
+                fetchEpisodes();
+                fetchLearningCurve();
             } catch (e) {
-                status.innerHTML = '<span class="status-badge" style="background: #ef4444;">❌ Demo Failed</span>';
+                status.innerHTML = '<span class="status-badge" style="background: #ef4444;">❌ Demo failed</span><p style="margin-top:8px;color:#94a3b8;font-size:0.85em;">Check console / network.</p>';
+            } finally {
                 btn.disabled = false;
             }
         }

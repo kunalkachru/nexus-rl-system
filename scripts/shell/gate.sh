@@ -237,7 +237,8 @@ openenv validate .
 if [[ "$DO_PUSH" -eq 1 ]]; then
   section "OPENENV PUSH (HF SPACE DEPLOY)"
   echo "Target repo: ${REPO_ID}"
-  openenv push . --repo-id "$REPO_ID"
+  # OpenEnv does not auto-load .hfignore; pass it so push staging matches lean Hub policy.
+  openenv push . --repo-id "$REPO_ID" --exclude .hfignore
   if [[ -n "$HF_URL" ]]; then
     section "WAIT FOR HF SPACE (POST-PUSH DOCKER REBUILD)"
     wait_for_hf_space_ready "$HF_URL" || true

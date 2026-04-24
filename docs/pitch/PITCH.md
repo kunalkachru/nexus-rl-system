@@ -24,7 +24,7 @@
 1. **Seven incidents** from easy payment timeouts to **INC007 nightmare** with **schema / API drift** mid-episode (Patronus-aligned sub-theme).
 2. **FastAPI + OpenEnv workflow:** `openenv validate` / `openenv push` to HF Space; **`openenv validate --url`** green on contract checks; core loop remains **`/reset` → `/step/{session_id}` → `/state/{session_id}`**.
 3. **Sparse reward** at episode end with dimensions aligned to operational quality (MTTR, diagnosis, customer, coordination, oversight + depth).
-4. **Judge dashboard:** live **metrics**, **learning curve**, **INC003 auto-demo**, and **manual validation** with optional **guided** step text so demos do not stall on blank forms.
+4. **Judge dashboard:** live **metrics**, **learning curve**, and a **Validation tab** that supports both scripted INC003 auto-demo and manual/guided validation.
 5. **Colab path:** GRPO + **HF TRL + Unsloth** against the deployed Space (`notebooks/grpo_colab_v2.ipynb`).
 
 ---
@@ -32,8 +32,8 @@
 ## Observable evidence (~35 s) — Criterion 3
 
 - Show **dashboard** reward curve and rolling average vs **baseline** (pre-event benchmark).
-- Use one canonical metrics callout (snapshot `2026-04-22T20:46:04Z`, stage URL): **episodes 360**, **avg 0.4339**, **best 0.9484**, **+63.7% vs baseline 0.265**.
-- One click: **Run Auto-Demo** on INC003 → completed episode + reward breakdown.
+- Use one canonical metrics callout (snapshot `2026-04-24T16:48:26Z`, stage URL): **episodes 387**, **avg 0.4634**, **best 1.0032**, **+74.9% vs baseline 0.265**.
+- In **Validation** tab: one click **Run auto-demo (INC003)** -> completed episode + reward breakdown.
 - Optional: “We export the same curve for slides via `python scripts/export_reward_plot.py --url …`.”
 
 ---
@@ -74,10 +74,10 @@ Answer in **short paragraphs**; do not invent numbers not on the dashboard.
 
 ## Demo order (recommended)
 
-1. Training tab → metrics + curve (5–10 s).  
-2. **Run Auto-Demo** INC003 (20–30 s).  
-3. Manual tab → **Start Test** → **Guided: fill + execute** until **Complete** (45–60 s).  
-4. If asked for artefacts: show `outputs/reward_export.png` from export script or Colab plots.
+1. Training tab -> metrics + curve (5–10 s).  
+2. Validation tab -> **Run auto-demo (INC003)** (20–30 s).  
+3. Validation tab -> **Start Test** -> **Guided: fill + execute** until **Complete** (45–60 s).  
+4. If asked for artefacts: show `docs/images/training_reward_curve.png` (repo) or refresh via export script / Colab plots.
 
 Use stage URL consistently in demo:
 

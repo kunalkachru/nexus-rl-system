@@ -1,11 +1,10 @@
-# Docker build context (HF Spaces uses Dockerfile from repo root).
-# Keep patterns aligned with `.hfignore` for Hub/Space uploads.
+# Docker build context (HF Spaces: Dockerfile COPY . .).
+# Align with `.hfignore` for Hub upload; Docker supports `!` negation — use it only here
+# when needed. Keep `openenv push` excludes free of `!` (see `.hfignore` header).
 
-# Git / CI
 .git
 .github
 
-# Python caches & env (never needed in the image)
 __pycache__
 **/__pycache__
 *.py[cod]
@@ -22,7 +21,6 @@ venv
 dist
 build
 
-# Tests & shell harnesses (not used at runtime in the Space)
 tests
 test_*.py
 test_local_deployment.sh
@@ -30,40 +28,29 @@ test_api_complete.sh
 test_hf_space_deployment.py
 test_regression_local.py
 gate.sh
-# Root *.sh above are tiny wrappers; implementations live under scripts/ (already excluded).
 
-# Colab / offline training (Space serves API + Streamlit only)
+# Notebooks: not needed inside the running API image; still uploaded to Hub when not excluded by .hfignore
 notebooks
+
 training
-train.py
 training_simulator.py
 scripts
 
-# Local deploy / compose (not the Space image)
 deploy_to_hf_spaces.py
 docker-compose.yml
 
-# Ephemeral / generated data
-*.png
-!web/training_runs/**/*.png
-training_artifacts
+# Optional: keep image smaller — docs remain on Hub repo for judges; not imported at runtime
+docs
+
+NEXUS_GRPO_backups
 grpo_checkpoints
 wandb
 
-# Colab GRPO backups (large; evidence lives in GitHub, not Space image)
-NEXUS_GRPO_backups
-
-# Docs & meta (README stays for Hub project page)
-*.md
-**/*.md
-!README.md
-
-# Alternate / backup entrypoints not started by start.sh
+gradio_app.py
 gradio_app_backup.py
 gradio_app_minimal.py
 streamlit_app.py
 router.py
 
-# External archive root (outside repo)
 ../archive/
 ../archive/**

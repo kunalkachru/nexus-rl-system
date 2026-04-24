@@ -20,20 +20,24 @@ export HF_TOKEN='hf_xxxxxxxxxxxxx'
 
 # Preferred: OpenEnv push (no git required)
 openenv validate .
-openenv push . --repo-id kunalkachru23/nexus-enhanced-stage
+openenv push . --repo-id kunalkachru23/nexus-enhanced-stage --exclude .hfignore
 
-# Alternative: python deploy_to_hf_spaces.py
+# Same as: ./gate.sh --push   (gate passes --exclude .hfignore for you)
 
 # Monitor: https://huggingface.co/spaces/kunalkachru23/nexus-enhanced-stage
 # Wait for "Running" status
 ```
+
+**Why `--exclude .hfignore`?** The OpenEnv CLI does **not** read `.hfignore` automatically. Without this flag, `openenv push` only applies its tiny built-in ignore list, so **tests, `scripts/`, backups, and other paths listed in `.hfignore` would still be uploaded** and the Space file tree stays bloated. Passing `--exclude .hfignore` makes push staging match this repo’s **lean Hub policy**. The file deliberately uses **no `!` negation** lines, because OpenEnv **skips** negated patterns and they would not work as intended.
+
+**If you omit `--exclude .hfignore`:** the push and Space build **still succeed** (they do not “crash” for that reason alone). You only lose the extra exclusions—more files get uploaded than intended until you prune the Space again or add the flag next time.
 
 ### Verify Deployment (2 min)
 ```bash
 # Validate deployed space via same gate pipeline
 ./gate.sh --skip-regression --skip-local-api --hf-url https://kunalkachru23-nexus-enhanced-stage.hf.space
 
-# Expected: ✅ 8/8 remote tests (see test_hf_space_deployment.py)
+# Expected: ✅ remote tests pass (see test_hf_space_deployment.py; gate runs full suite)
 ```
 
 ### Start Training on Colab (6 hours)
@@ -48,7 +52,7 @@ openenv push . --repo-id kunalkachru23/nexus-enhanced-stage
 ```bash
 python scripts/export_reward_plot.py --url https://kunalkachru23-nexus-enhanced-stage.hf.space
 # or from local episode_rewards.json:
-python scripts/export_reward_plot.py --file episode_rewards.json --out outputs/reward_export.png
+python scripts/export_reward_plot.py --file episode_rewards.json --out docs/images/training_reward_curve.png
 ```
 
 ---
