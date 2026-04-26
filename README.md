@@ -32,7 +32,8 @@ Use this section first during judging/review.
 - **Compliance + judging evidence index:** [`docs/project/JUDGING_EVIDENCE_INDEX.md`](docs/project/JUDGING_EVIDENCE_INDEX.md)
 - **Frozen submission snapshot:** [`docs/project/snapshots/submission_snapshot_20260424T164826Z.md`](docs/project/snapshots/submission_snapshot_20260424T164826Z.md)
 - **HF blog draft (publish-ready):** [`docs/blog/blog_post_hf.md`](docs/blog/blog_post_hf.md)
-- **YouTube (<2 min):** [https://www.youtube.com/watch?v=a9YZF30tomw](https://www.youtube.com/watch?v=a9YZF30tomw)
+- **YouTube (1 min, latest):** [https://www.youtube.com/watch?v=yZnUS1-F5p0](https://www.youtube.com/watch?v=yZnUS1-F5p0)
+- **YouTube (8 min, detailed):** [https://www.youtube.com/watch?v=a9YZF30tomw](https://www.youtube.com/watch?v=a9YZF30tomw)
 
 ### Canonical evidence snapshot (frozen)
 
@@ -209,7 +210,8 @@ Documentation lives under [`docs/`](docs/) (guides, deployment, project status, 
   - `docs/project/snapshots/component_metrics_20260424T164826Z.md`
 - [ ] Blog/video/slide links are present and clickable from this README:
   - Blog draft: [`docs/blog/blog_post_hf.md`](docs/blog/blog_post_hf.md)
-  - Video link: [https://www.youtube.com/watch?v=a9YZF30tomw](https://www.youtube.com/watch?v=a9YZF30tomw)
+  - Video link (1 min, latest): [https://www.youtube.com/watch?v=yZnUS1-F5p0](https://www.youtube.com/watch?v=yZnUS1-F5p0)
+  - Video link (8 min, detailed): [https://www.youtube.com/watch?v=a9YZF30tomw](https://www.youtube.com/watch?v=a9YZF30tomw)
 - [ ] Pitch numbers match frozen snapshot values (no stale metrics in scripts).
 
 ## Blog Post
