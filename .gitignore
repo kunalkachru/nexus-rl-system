@@ -81,6 +81,16 @@ gradio_app_minimal.py
 # --- Local assistant / scratch notes (optional) ---
 CLAUDE.md
 docs/meta/CLAUDE.md
+docs/pitch/PITCH.md
+docs/pitch/YOUTUBE_RECORDING_SCRIPT.md
+docs/pitch/VIDEO_RECORD_NOW_PACK.md
+docs/pitch/*.md
+!docs/pitch/PITCH_3MIN.md
+!docs/pitch/DEMO_WALKTHROUGH.md
+docs/project/*.md
+!docs/project/JUDGING_EVIDENCE_INDEX.md
+docs/project/snapshots/*
+!docs/project/snapshots/submission_snapshot_20260424T164826Z.md
 
 # --- External archive root (outside repo) ---
 ../archive/
