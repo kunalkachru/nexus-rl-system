@@ -33,7 +33,7 @@ Use this section first during judging/review.
 - **Behavioral delta (before vs after):** [`docs/project/BEHAVIORAL_DELTA_PROOF.md`](docs/project/BEHAVIORAL_DELTA_PROOF.md)
 - **Compliance lock matrix:** [`docs/project/COMPLIANCE_LOCK_MATRIX.md`](docs/project/COMPLIANCE_LOCK_MATRIX.md)
 - **HF blog draft (publish-ready):** [`docs/blog/blog_post_hf.md`](docs/blog/blog_post_hf.md)
-- **YouTube (<2 min):** pending final recording (intentionally last-mile)
+- **YouTube (<2 min):** [https://www.youtube.com/watch?v=a9YZF30tomw](https://www.youtube.com/watch?v=a9YZF30tomw)
 
 ### Canonical evidence snapshot (frozen)
 
@@ -210,7 +210,7 @@ Documentation lives under [`docs/`](docs/) (guides, deployment, project status, 
   - `docs/project/snapshots/component_metrics_20260424T164826Z.md`
 - [ ] Blog/video/slide links are present and clickable from this README:
   - Blog draft: [`docs/blog/blog_post_hf.md`](docs/blog/blog_post_hf.md)
-  - Video link: _pending final recording_
+  - Video link: [https://www.youtube.com/watch?v=a9YZF30tomw](https://www.youtube.com/watch?v=a9YZF30tomw)
 - [ ] Pitch numbers match frozen snapshot values (no stale metrics in scripts).
 
 ## Blog Post
