@@ -27,11 +27,10 @@ NEXUS Enhanced trains an AI Incident Commander to orchestrate 5 specialist agent
 Use this section first during judging/review.
 
 - **Live environment (HF Space):** https://kunalkachru23-nexus-enhanced-stage.hf.space/
-- **3-minute pitch script:** [`docs/pitch/PITCH.md`](docs/pitch/PITCH.md)
+- **3-minute pitch script:** [`docs/pitch/PITCH_3MIN.md`](docs/pitch/PITCH_3MIN.md)
 - **2-minute demo walkthrough:** [`docs/pitch/DEMO_WALKTHROUGH.md`](docs/pitch/DEMO_WALKTHROUGH.md)
 - **Compliance + judging evidence index:** [`docs/project/JUDGING_EVIDENCE_INDEX.md`](docs/project/JUDGING_EVIDENCE_INDEX.md)
-- **Behavioral delta (before vs after):** [`docs/project/BEHAVIORAL_DELTA_PROOF.md`](docs/project/BEHAVIORAL_DELTA_PROOF.md)
-- **Compliance lock matrix:** [`docs/project/COMPLIANCE_LOCK_MATRIX.md`](docs/project/COMPLIANCE_LOCK_MATRIX.md)
+- **Frozen submission snapshot:** [`docs/project/snapshots/submission_snapshot_20260424T164826Z.md`](docs/project/snapshots/submission_snapshot_20260424T164826Z.md)
 - **HF blog draft (publish-ready):** [`docs/blog/blog_post_hf.md`](docs/blog/blog_post_hf.md)
 - **YouTube (<2 min):** [https://www.youtube.com/watch?v=a9YZF30tomw](https://www.youtube.com/watch?v=a9YZF30tomw)
 
@@ -52,7 +51,7 @@ From [`docs/project/snapshots/submission_snapshot_20260424T164826Z.md`](docs/pro
 | Average reward | 0.2650 | 0.4634 |
 | Best reward | - | 1.0032 |
 | Improvement | - | +74.9% |
-| Behavioral evidence | Scripted/weak coordination baseline pattern | See [`docs/project/BEHAVIORAL_DELTA_PROOF.md`](docs/project/BEHAVIORAL_DELTA_PROOF.md) |
+| Behavioral evidence | Scripted/weak coordination baseline pattern | See [`docs/project/JUDGING_EVIDENCE_INDEX.md`](docs/project/JUDGING_EVIDENCE_INDEX.md) |
 
 ## Quick Start
 
@@ -195,8 +194,8 @@ openenv validate --url https://kunalkachru23-nexus-enhanced-stage.hf.space
 
 Documentation lives under [`docs/`](docs/) (guides, deployment, project status, pitch/demo scripts, blog drafts).
 
-- **[`docs/pitch/PITCH.md`](docs/pitch/PITCH.md)** — 3-minute spoken script + 2-minute Q&A bullets (organizer pitch format).
-- **[`docs/project/PLAN_OF_ACTION.md`](docs/project/PLAN_OF_ACTION.md)** — hackathon compliance matrix + prioritized todo table.
+- **[`docs/pitch/PITCH_3MIN.md`](docs/pitch/PITCH_3MIN.md)** — 3-minute spoken script.
+- **[`docs/project/JUDGING_EVIDENCE_INDEX.md`](docs/project/JUDGING_EVIDENCE_INDEX.md)** — canonical compliance and judging evidence map.
 - **`scripts/export_reward_plot.py`** — export reward curve PNG from `--url` or `episode_rewards.json` (slides / observable improvement evidence). Canonical chart (tracked in git): **`docs/images/training_reward_curve.png`** (see section above).
 
 ## Final submission checklist (compliance-ready)
